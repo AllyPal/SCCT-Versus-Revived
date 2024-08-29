@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+.vs
+
+build/
+Debug/
+Release/
+x64/
+x86/
