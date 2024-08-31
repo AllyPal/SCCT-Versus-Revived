@@ -5,7 +5,7 @@ Enhancements and fixes for Splinter Cell Chaos Theory (SCCT) Versus.
 ## Features:
 * Allows users to set a frame limit (no longer capped at 64 FPS on Windows with SCCT Frame Rate Editor/Framer)
 * Fixes animated textures/shaders (e.g. the water effect on Aquarius) that run too fast at higher frame rates.  Textures/shaders which already specify a limit will retain their original cap
-* Fixes issue where grenades (frag, chaff, smoke etc) instantly explode on impact with the floor
+* Fixes issue where grenades (frag, chaff, smoke etc) intermittently instantly explode on impact with the floor
 * Adds `-join <ip:port>` command to allow joining servers without a VPN.  
 
   The server must be using SCCT-Versus-Revived, but does not need a command line.
