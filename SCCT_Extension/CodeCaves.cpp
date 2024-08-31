@@ -62,6 +62,15 @@ __declspec(naked) void ServerInfoBroadcast() {
     }
 }
 
+int InstaFixPrototypeEntry = 0x10AB8DAA;
+__declspec(naked) void InstaFixPrototype() {
+    static int InstaFixPrototypeResume = 0x10AB8DE9;
+    __asm {
+        jmp dword ptr[InstaFixPrototypeResume];
+    }
+}
+
+
 //typedef wchar_t* (__cdecl* GetFriendlyErrorSig)(int Error);
 //
 //wchar_t* GetFriendlyError(int Error) {
@@ -390,6 +399,7 @@ void CodeCaves::Initialize()
 
     WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
+    WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
 #if DISSECT
     WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
     WriteJump(0x1093B590, test);
