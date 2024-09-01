@@ -2,6 +2,7 @@
 #include "CodeCaves.h"
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <dinput.h>
 #pragma comment(lib, "Ws2_32.lib")
 
 const double oneThousand = 1000.00f;
@@ -46,6 +47,124 @@ void PrintUnrealScriptDebug() {
 void PrintTest() {
     std::cout << "Redirected" << std::endl;
 }
+
+static int xMouseDelta = 0;
+static int yMouseDelta = 0;
+
+int DisableMouseInputEntry = 0x10B10CF3;
+__declspec(naked) void DisableMouseInput() {
+    static int DoNotProcess = 0x10B10CAE;
+    static int KeepProcessing = 0x10B10CF8;
+    __asm {
+        cmp     eax, 0x10
+        ja      doNotProcess
+        cmp     eax, 0x0
+        je      mouseX
+        cmp     eax, 0x4
+        je      mouseY
+
+        doProcess:
+        jmp     dword ptr[KeepProcessing]
+
+        doNotProcess:
+        jmp     dword ptr[DoNotProcess]
+
+        mouseX:
+        push eax
+        mov eax, dword ptr[xMouseDelta]
+        cmp eax, 0
+        pop eax
+        je doNotProcess
+        jmp doProcess
+
+        mouseY :
+        push eax
+        mov eax, dword ptr[yMouseDelta]
+        cmp eax, 0
+        pop eax
+        je doNotProcess
+        jmp doProcess
+    }
+}
+
+void HandleMouseInput(LPDIRECTINPUTDEVICE8 device, int dd) {
+    DIMOUSESTATE2 mouseState;
+    HRESULT hr = device->GetDeviceState(sizeof(DIMOUSESTATE2), &mouseState);
+
+    if (FAILED(hr)) {
+        if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED) {
+            std::cerr << "Device lost or not acquired. Attempting to reacquire..." << std::endl;
+            hr = device->Acquire();
+            if (FAILED(hr)) {
+                std::cerr << "Failed to acquire device." << std::endl;
+                return;
+            }
+            if (SUCCEEDED(hr)) {
+                std::cerr << "Acquired device." << std::endl;
+            }
+            hr = device->GetDeviceState(sizeof(DIMOUSESTATE), &mouseState);
+        }
+
+        if (FAILED(hr)) {
+            std::cerr << "Failed to get device state. Error code: " << toHexString(hr) << std::endl;
+            return;
+        }
+    }
+    xMouseDelta = mouseState.lX;
+    yMouseDelta = mouseState.lY;
+}
+
+
+int FixMouseInputEntry = 0x10B10C80;
+__declspec(naked) void FixMouseInput() {
+    static int DevicePtr = 0x10C91D04;
+    static int dd;
+    static LPDIRECTINPUTDEVICE8 device;
+    __asm {
+        pushad
+        mov eax, DevicePtr
+        cmp eax, 0
+        je exitf
+        mov eax, dword ptr[eax]
+        je exitf
+        mov dword ptr[device], eax
+        mov dword ptr[dd], esi
+    }
+    HandleMouseInput(device, dd);
+    static int Return = 0x10B10C86;
+    __asm {
+        exitf:
+        popad
+        test ebp, ebp
+        mov[esp + 0x10], ebx
+        jmp dword ptr[Return]
+    }
+}
+
+int X_WriteMouseInputEntry = 0x10B10D06;
+__declspec(naked) void X_WriteMouseInput() {
+    static int Resume = 0x10B10D0D;
+
+    __asm {
+        mov eax, [esi + 0x18]
+        fild dword ptr[xMouseDelta]
+        jmp dword ptr[Resume]      
+    }
+}
+
+int Y_WriteMouseInputEntry = 0x10B10D23;
+__declspec(naked) void Y_WriteMouseInput() {
+    static int Resume = 0x10B10D2D;
+
+
+    __asm {
+        mov     eax, [esi + 0x18]
+        mov     ecx, [eax + 0x28]
+        mov     eax, dword ptr[yMouseDelta]
+        jmp dword ptr[Resume]
+    }
+}
+
 
 int ServerInfoBroadcastEntry = 0x10AB3E35;
 __declspec(naked) void ServerInfoBroadcast() {
@@ -400,6 +519,10 @@ void CodeCaves::Initialize()
     WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
     WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
+    WriteJump(DisableMouseInputEntry, DisableMouseInput);
+    WriteJump(FixMouseInputEntry, FixMouseInput);
+    WriteJump(X_WriteMouseInputEntry, X_WriteMouseInput);
+    WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
 #if DISSECT
     WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
     WriteJump(0x1093B590, test);
