@@ -519,10 +519,14 @@ void CodeCaves::Initialize()
     WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
     WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
-    WriteJump(DisableMouseInputEntry, DisableMouseInput);
-    WriteJump(FixMouseInputEntry, FixMouseInput);
-    WriteJump(X_WriteMouseInputEntry, X_WriteMouseInput);
-    WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
+
+    if (Config::mouseInputFix) {
+        WriteJump(DisableMouseInputEntry, DisableMouseInput);
+        WriteJump(FixMouseInputEntry, FixMouseInput);
+        WriteJump(X_WriteMouseInputEntry, X_WriteMouseInput);
+        WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
+    }
+
 #if DISSECT
     WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
     WriteJump(0x1093B590, test);

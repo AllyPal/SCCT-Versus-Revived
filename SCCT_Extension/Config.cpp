@@ -11,6 +11,7 @@ bool Config::applyAnimationFix;
 bool Config::useDirectConnect;
 std::wstring Config::directConnectIp;
 std::wstring Config::directConnectPort;
+bool Config::mouseInputFix;
 
 void Config::Initialize(std::wstring& configFilePath) {
     configFilePathRef = &configFilePath;
@@ -19,6 +20,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     useDirectConnect = false;
     directConnectIp = L"";
     directConnectPort = L"";
+    mouseInputFix = true;
 
     std::ifstream configFile(*configFilePathRef);
 
@@ -29,6 +31,7 @@ void Config::Initialize(std::wstring& configFilePath) {
 
             frameRateLimit = jsonConfig.value("frameRateLimit", 90);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
+            mouseInputFix = jsonConfig.value("mouseInputFix", true);
 
             // Update the file with any new fields
             Serialize();
@@ -78,6 +81,8 @@ void Config::ProcessCommandLine()
     else {
         std::wcout << L"UseDirectConnect: false" << std::endl;
     }
+
+    std::wcout << L"mouseInputFix: " << mouseInputFix << std::endl;
 }
 
 void Config::Serialize() {
@@ -89,6 +94,7 @@ void Config::Serialize() {
 
             jsonConfig["frameRateLimit"] = frameRateLimit;
             jsonConfig["applyAnimationFix"] = applyAnimationFix;
+            jsonConfig["mouseInputFix"] = mouseInputFix;
 
             configFile << jsonConfig.dump(4);
         }
