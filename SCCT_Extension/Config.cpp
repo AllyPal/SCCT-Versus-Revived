@@ -96,13 +96,10 @@ void Config::Serialize() {
             nlohmann::json jsonConfig;
 
             jsonConfig["frameRateLimit"] = frameRateLimit;
-            jsonConfig["frameRateLimit_Description"] = "A limit of above 120 is not recommended";
 
             jsonConfig["applyAnimationFix"] = applyAnimationFix;
-            jsonConfig["applyAnimationFix_Description"] = "Fixes an issue where texture animations are rendered too fast and sometimes flash/flicker.";
 
             jsonConfig["mouseInputFix"] = mouseInputFix;
-            jsonConfig["mouseInputFix_Description"] = "Fixes inconsistent mouse input";
 
             jsonConfig["applyWidescreenFix"] = applyWidescreenFix;
 
