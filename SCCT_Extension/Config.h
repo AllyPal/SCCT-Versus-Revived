@@ -6,6 +6,7 @@ class Config {
 public:
     static int frameRateLimit;
     static bool applyAnimationFix;
+    static bool applyWidescreenFix;
 
     static bool useDirectConnect;
     static std::wstring directConnectIp;

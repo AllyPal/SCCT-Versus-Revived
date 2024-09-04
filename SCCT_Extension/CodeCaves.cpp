@@ -3,6 +3,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <dinput.h>
+#include "include/d3d8/d3d8.h"
 #pragma comment(lib, "Ws2_32.lib")
 
 const double oneThousand = 1000.00f;
@@ -189,6 +190,183 @@ __declspec(naked) void InstaFixPrototype() {
     }
 }
 
+static D3DPRESENT_PARAMETERS* overriddenD3dpp;
+void ProcessDpp(D3DPRESENT_PARAMETERS* d3dpp) {
+
+    std::cout << "FullScreen_RefreshRateInHz: " << d3dpp->FullScreen_RefreshRateInHz << std::endl;
+    std::cout << "BackBufferWidth: " << d3dpp->BackBufferWidth << std::endl;
+    std::cout << "AutoDepthStencilFormat: " << d3dpp->AutoDepthStencilFormat << std::endl;
+    std::cout << "BackBufferCount: " << d3dpp->BackBufferCount << std::endl;
+    std::cout << "BackBufferFormat: " << d3dpp->BackBufferFormat << std::endl;
+    std::cout << "BackBufferHeight: " << d3dpp->BackBufferHeight << std::endl;
+    std::cout << "EnableAutoDepthStencil: " << d3dpp->EnableAutoDepthStencil << std::endl;
+    std::cout << "SwapEffect: " << d3dpp->SwapEffect << std::endl;
+    std::cout << "MultiSampleType: " << d3dpp->MultiSampleType << std::endl;
+    std::cout << "Flags: " << d3dpp->Flags << std::endl;
+
+    D3DPRESENT_PARAMETERS d3dppReplacement;
+    ZeroMemory(&d3dppReplacement, sizeof(d3dppReplacement));
+    
+    d3dppReplacement.BackBufferWidth = d3dpp->BackBufferWidth;
+
+
+    overriddenD3dpp = &d3dppReplacement;
+}
+
+int DPPEntry = 0x1095CA7A;
+__declspec(naked) void DPP() {
+    static D3DPRESENT_PARAMETERS* d3dpp;
+    __asm {
+        add     eax, 0x46A8
+        mov dword ptr[d3dpp], eax
+        push    eax
+        pushad
+    }
+    ProcessDpp(d3dpp);
+    static int Return = 0x1095CA80;
+    __asm {
+        popad
+        jmp dword ptr[Return]
+    }
+}
+
+#define D3DX_PI    (3.14159265358979323846)
+
+static LPDIRECT3DDEVICE8 pDevice;
+
+void DebugD3D() {
+    D3DCAPS8 caps;
+    HRESULT result = pDevice->GetDeviceCaps(&caps);
+    if (FAILED(result)) {
+        std::wcout << "DeviceCaps Failed" << std::endl;
+        return;
+    }
+    std::wcout << std::fixed << std::hex << "DeviceCaps" << std::endl;
+    std::wcout << std::fixed << std::hex << "DeviceType: " << caps.DeviceType << std::endl;
+    std::wcout << std::fixed << std::hex << "AdapterOrdinal: " << caps.AdapterOrdinal << std::endl;
+    std::wcout << std::fixed << std::hex << "Caps: " << caps.Caps << std::endl;
+    std::wcout << std::fixed << std::hex << "Caps2: " << caps.Caps2 << std::endl;
+    std::wcout << std::fixed << std::hex << "Caps3: " << caps.Caps3 << std::endl;
+    std::wcout << std::fixed << std::hex << "PresentationIntervals: " << caps.PresentationIntervals << std::endl;
+    std::wcout << std::fixed << std::hex << "CursorCaps: " << caps.CursorCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "DevCaps: " << caps.DevCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "PrimitiveMiscCaps: " << caps.PrimitiveMiscCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "RasterCaps: " << caps.RasterCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "ZCmpCaps: " << caps.ZCmpCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "SrcBlendCaps: " << caps.SrcBlendCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "DestBlendCaps: " << caps.DestBlendCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "AlphaCmpCaps: " << caps.AlphaCmpCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "ShadeCaps: " << caps.ShadeCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "TextureCaps: " << caps.TextureCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "TextureFilterCaps: " << caps.TextureFilterCaps << std::endl;          // D3DPTFILTERCAPS for IDirect3DTexture8's
+    std::wcout << std::fixed << std::hex << "CubeTextureFilterCaps: " << caps.CubeTextureFilterCaps << std::endl;      // D3DPTFILTERCAPS for IDirect3DCubeTexture8's
+    std::wcout << std::fixed << std::hex << "VolumeTextureFilterCaps: " << caps.VolumeTextureFilterCaps << std::endl;    // D3DPTFILTERCAPS for IDirect3DVolumeTexture8's
+    std::wcout << std::fixed << std::hex << "TextureAddressCaps: " << caps.TextureAddressCaps << std::endl;         // D3DPTADDRESSCAPS for IDirect3DTexture8's
+    std::wcout << std::fixed << std::hex << "VolumeTextureAddressCaps: " << caps.VolumeTextureAddressCaps << std::endl;   // D3DPTADDRESSCAPS for IDirect3DVolumeTexture8's
+    std::wcout << std::fixed << std::hex << "LineCaps: " << caps.LineCaps << std::endl;                   // D3DLINECAPS
+    std::wcout << std::fixed << std::hex << "MaxTextureWidth: " << caps.MaxTextureWidth << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxTextureHeight: " << caps.MaxTextureHeight << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVolumeExtent: " << caps.MaxVolumeExtent << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxTextureRepeat: " << caps.MaxTextureRepeat << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxTextureAspectRatio: " << caps.MaxTextureAspectRatio << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxAnisotropy: " << caps.MaxAnisotropy << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVertexW: " << caps.MaxVertexW << std::endl;
+    std::wcout << std::fixed << std::hex << "GuardBandLeft: " << caps.GuardBandLeft << std::endl;
+    std::wcout << std::fixed << std::hex << "GuardBandTop: " << caps.GuardBandTop << std::endl;
+    std::wcout << std::fixed << std::hex << "GuardBandRight: " << caps.GuardBandRight << std::endl;
+    std::wcout << std::fixed << std::hex << "GuardBandBottom: " << caps.GuardBandBottom << std::endl;
+    std::wcout << std::fixed << std::hex << "ExtentsAdjust: " << caps.ExtentsAdjust << std::endl;
+    std::wcout << std::fixed << std::hex << "StencilCaps: " << caps.StencilCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "FVFCaps: " << caps.FVFCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "TextureOpCaps: " << caps.TextureOpCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxTextureBlendStages: " << caps.MaxTextureBlendStages << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxSimultaneousTextures: " << caps.MaxSimultaneousTextures << std::endl;
+    std::wcout << std::fixed << std::hex << "VertexProcessingCaps: " << caps.VertexProcessingCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxActiveLights: " << caps.MaxActiveLights << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxUserClipPlanes: " << caps.MaxUserClipPlanes << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVertexBlendMatrices: " << caps.MaxVertexBlendMatrices << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVertexBlendMatrixIndex: " << caps.MaxVertexBlendMatrixIndex << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxPointSize: " << caps.MaxPointSize << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxPrimitiveCount: " << caps.MaxPrimitiveCount << std::endl;          // max number of primitives per DrawPrimitive call
+    std::wcout << std::fixed << std::hex << "MaxVertexIndex: " << caps.MaxVertexIndex << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxStreams: " << caps.MaxStreams << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxStreamStride: " << caps.MaxStreamStride << std::endl;            // max stride for SetStreamSource
+    std::wcout << std::fixed << std::hex << "VertexShaderVersion: " << caps.VertexShaderVersion << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVertexShaderConst: " << caps.MaxVertexShaderConst << std::endl;       // number of vertex shader constant registers
+    std::wcout << std::fixed << std::hex << "PixelShaderVersion: " << caps.PixelShaderVersion << std::endl;
+
+    if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 0))
+    {
+        int majorVersion = D3DSHADER_VERSION_MAJOR(caps.PixelShaderVersion);
+        int minorVersion = D3DSHADER_VERSION_MINOR(caps.PixelShaderVersion);
+        std::wcout << std::fixed << std::hex << "PixelShaderVersion_Major: " << majorVersion << std::endl;
+        std::wcout << std::fixed << std::hex << "PixelShaderVersion_Minor: " << minorVersion << std::endl;
+        
+    }
+
+    std::wcout << std::fixed << std::hex << "MaxPixelShaderValue: " << caps.MaxPixelShaderValue << std::endl;
+}
+
+
+int DeviceEntry = 0x1095CAAA;
+__declspec(naked) void Device() {
+    static int Return = 0x1095CAB2;
+    __asm {
+        mov     eax, [ecx + 0x46A4]
+        mov     edx, [eax]
+        pushad
+        mov     [pDevice], eax
+    }
+    DebugD3D();
+    __asm {
+        popad
+        jmp     dword ptr[Return]
+    }
+}
+
+static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
+{
+    D3DDISPLAYMODE d3dDisplayMode;
+    pDevice->GetDisplayMode(&d3dDisplayMode);
+
+    float displayHeight = static_cast<float>(d3dDisplayMode.Height);
+    float displayWidth = static_cast<float>(d3dDisplayMode.Width);
+    displayWidth = min(displayWidth, d3dDisplayMode.Height * (9.0f/16.0f));
+    float displayAspectRatio = displayHeight / displayWidth;
+    auto renderAspectRatio = fabs(roundf((projMatrix->_11 / projMatrix->_22) * 100.0f) / 100.0f);
+    const float fourByThreeAspect = 0.75f;
+    if (renderAspectRatio == fourByThreeAspect && fabs(projMatrix->_22) > 0.1f) {
+        if ((projMatrix->_11 < 0.0f) ^ (projMatrix->_22 < 0.0f)) {
+            projMatrix->_22 = (projMatrix->_11 / d3dDisplayMode.Height) * d3dDisplayMode.Width;
+            projMatrix->_22 *= -1;
+        }
+        else {
+            projMatrix->_22 = (projMatrix->_11 / d3dDisplayMode.Height) * d3dDisplayMode.Width;
+        }
+    }
+    else {
+        // omit 2d.  TODO: Consider scaling and centering
+    }
+}
+
+int SetProjectionEntry = 0x1096CA07;
+__declspec(naked) void SetProjection() {
+    static D3DMATRIX* projMatrix;
+    static int Return = 0x1096CA0D;
+    __asm {
+        pushad
+
+        mov     eax, [ebp]
+        mov     dword ptr[projMatrix], ebp
+    }
+    SetupProjectionMatrix(projMatrix);
+
+    __asm {
+        popad
+        call    dword ptr[ecx + 0x94]
+        jmp     dword ptr[Return]
+    }
+}
 
 //typedef wchar_t* (__cdecl* GetFriendlyErrorSig)(int Error);
 //
@@ -274,8 +452,6 @@ __declspec(naked) void sendBroadcastLanMessage() {
 }
 
 int unrealScriptNameDefinitionLookupEntry = 0x1091FF70;
-int loc_0x1091FF70 = 0x1091FF85;
-
 __declspec(naked) void unrealScriptNameDefinitionLookup() {
     __asm {
         push    edi
@@ -292,6 +468,7 @@ __declspec(naked) void unrealScriptNameDefinitionLookup() {
             pushad
     }
 
+    static int loc_0x1091FF70 = 0x1091FF85;
     PrintUnrealScriptDebug();
     __asm {
         popad
@@ -519,6 +696,10 @@ void CodeCaves::Initialize()
     WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
     WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
+    WriteJump(DeviceEntry, Device);
+    if (Config::applyWidescreenFix)
+        WriteJump(SetProjectionEntry, SetProjection);
+    WriteJump(DPPEntry, DPP);
 
     if (Config::mouseInputFix) {
         WriteJump(DisableMouseInputEntry, DisableMouseInput);

@@ -9,7 +9,7 @@
 #include <Windows.h>
 #include <thread>
 #include <chrono>
-#include "nlohmann/json.hpp"
+#include "include/nlohmann/json.hpp"
 #include "logger.h"
 #include "Config.h"
 

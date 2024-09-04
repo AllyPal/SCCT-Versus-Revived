@@ -2,11 +2,12 @@
 #include "Config.h"
 #include <fstream>
 #include <iostream>
-#include "nlohmann/json.hpp"
+#include "include/nlohmann/json.hpp"
 
 static std::wstring* configFilePathRef;
 int Config::frameRateLimit;
 bool Config::applyAnimationFix;
+bool Config::applyWidescreenFix;
 
 bool Config::useDirectConnect;
 std::wstring Config::directConnectIp;
@@ -17,6 +18,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     configFilePathRef = &configFilePath;
     frameRateLimit = 90;
     applyAnimationFix = true;
+    applyWidescreenFix = true;
     useDirectConnect = false;
     directConnectIp = L"";
     directConnectPort = L"";
@@ -31,6 +33,7 @@ void Config::Initialize(std::wstring& configFilePath) {
 
             frameRateLimit = jsonConfig.value("frameRateLimit", 90);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
+            applyWidescreenFix = jsonConfig.value("applyWidescreenFix", true);
             mouseInputFix = jsonConfig.value("mouseInputFix", true);
 
             // Update the file with any new fields
@@ -93,8 +96,15 @@ void Config::Serialize() {
             nlohmann::json jsonConfig;
 
             jsonConfig["frameRateLimit"] = frameRateLimit;
+            jsonConfig["frameRateLimit_Description"] = "A limit of above 120 is not recommended";
+
             jsonConfig["applyAnimationFix"] = applyAnimationFix;
+            jsonConfig["applyAnimationFix_Description"] = "Fixes an issue where texture animations are rendered too fast and sometimes flash/flicker.";
+
             jsonConfig["mouseInputFix"] = mouseInputFix;
+            jsonConfig["mouseInputFix_Description"] = "Fixes inconsistent mouse input";
+
+            jsonConfig["applyWidescreenFix"] = applyWidescreenFix;
 
             configFile << jsonConfig.dump(4);
         }
