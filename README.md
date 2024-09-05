@@ -8,6 +8,10 @@ Enhancements and fixes for Splinter Cell Chaos Theory (SCCT) Versus.
 * Fixes animated textures/shaders (e.g. the water effect on Aquarius) that run too fast at higher frame rates.  Textures/shaders which already specify a limit will retain their original cap
 * Fixes issue where grenades (frag, chaff, smoke etc) intermittently instantly explode on impact with the floor
 * Fixes widescreen aspect ratio (stretched look)
+* Improved frame timing for more consistent frame rate.  Configurable with `frameTimingMode`:
+  * "0" highest CPU usage, highest compatibility
+  * "1" lower CPU usage
+  * "2" lowest precision (closest to original game)
 * Adds `-join <ip:port>` command to allow joining servers without a VPN.  
 
   The server must be using SCCT-Versus-Revived, but does not need a command line.
