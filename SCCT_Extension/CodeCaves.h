@@ -21,4 +21,3 @@ public:
 	CodeCaves(Logger* logger2);
 	void Initialize();
 };
-

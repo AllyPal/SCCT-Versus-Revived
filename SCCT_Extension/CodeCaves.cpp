@@ -4,7 +4,15 @@
 #include <ws2tcpip.h>
 #include <dinput.h>
 #include "include/d3d8/d3d8.h"
+#include <format>
+#include <set>
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <timeapi.h>
+#include <Windows.h>
 #pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "winmm.lib")
 
 const double oneThousand = 1000.00f;
 const float oneHundred = 100.00f;
@@ -12,8 +20,8 @@ const float one = 1.00f;
 const double zero = 0.00f;
 
 const int ToMilliseconds = 0x10B83AA0;
-const int timeBeginPeriod = 0x10BDF53C;
-const int timeEndPeriod = 0x10BDF538;
+const int timeBeginPeriodAddr = 0x10BDF53C;
+const int timeEndPeriodAddr = 0x10BDF538;
 const int sleep = 0x10BDF108;
 
 Logger* logger_;
@@ -317,7 +325,7 @@ __declspec(naked) void Device() {
         pushad
         mov     [pDevice], eax
     }
-    DebugD3D();
+    //DebugD3D();
     __asm {
         popad
         jmp     dword ptr[Return]
@@ -476,13 +484,90 @@ __declspec(naked) void unrealScriptNameDefinitionLookup() {
     }
 }
 
-int frameRateLimit;
+float GetPerformance() {
+    static int getPerformanceAddress = 0x10904030;
+    float result;
+    __asm {
+        call dword ptr[getPerformanceAddress]
+        fstp dword ptr[result]
+    }
+    return result;
+}
+
+std::chrono::steady_clock::time_point nextFrameTime;
+void UpdateLastFrameRenderedTime() {
+    double frameTimeSeconds = (double)1.0 / (double)Config::frameRateLimit;
+    auto frameTimeNanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::duration<double>((double)1.0 / (double)Config::frameRateLimit)
+    ).count();
+
+    nextFrameTime = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(frameTimeNanoseconds);
+}
+
+void preciseSpin() {
+    while (std::chrono::high_resolution_clock::now() < nextFrameTime) {
+    }    
+}
+
+void preciseSleep() {
+    auto remainingFrameTime = nextFrameTime - std::chrono::high_resolution_clock::now();
+    auto remainingMS = std::chrono::duration<double, std::milli>(remainingFrameTime).count();
+    if (remainingMS - std::floor(remainingMS) >= 0.5) {
+        remainingMS = std::floor(remainingMS);
+    }
+    else {
+        remainingMS = std::floor(remainingMS) - 1;
+    }
+    if (remainingMS > 0) {
+        timeBeginPeriod(1);
+        Sleep(static_cast<DWORD>(remainingMS));
+        timeEndPeriod(1);
+    }
+
+    preciseSpin();
+}
+
+int endFrameTimerEntry = 0x1095E417;
+int endFrameTimer2Entry = 0x1095E43C;
+__declspec(naked) void afterPresent() {
+    __asm {
+        pushad
+    }
+   switch (Config::frameTimingMode) {
+    default:
+        preciseSpin();
+        break;
+    case 1:
+        preciseSleep();
+        break;
+    }
+    preciseSpin();
+    
+    UpdateLastFrameRenderedTime();
+    __asm {
+        popad
+        add     esp, 0x14
+        retn    0x4
+    }
+}
+
+
+int startFrameTimerEntry = 0x1095E331;
+__declspec(naked) void beforePresent() {
+    static int Return = 0x1095E38D;
+    __asm {
+        mov edx, [esp + 00]
+        jmp dword ptr[Return]
+    }
+
+}
+
 int fixSleepTimerEntry = 0x1095E340;
 const int fixSleepTimerReturn = 0x1095E38D;
 __declspec(naked) void fixSleepTimer() {
     __asm {
-        mov     eax, dword ptr[frameRateLimit]
-        fild    dword ptr[frameRateLimit]
+        mov     eax, dword ptr[Config::frameRateLimit]
+        fild    dword ptr[Config::frameRateLimit]
         test    eax, eax
         jge     loc_1095E356
         mov     eax, 0x10C10A24
@@ -501,14 +586,14 @@ __declspec(naked) void fixSleepTimer() {
         push    eax
 
         push    0x1
-        mov     eax, dword ptr[timeBeginPeriod]
+        mov     eax, dword ptr[timeBeginPeriodAddr]
         call    dword ptr[eax]
 
         mov     eax, dword ptr[sleep]
         call    dword ptr[eax]
 
         push    0x1
-        mov     eax, dword ptr[timeEndPeriod]
+        mov     eax, dword ptr[timeEndPeriodAddr]
         call    dword ptr[eax]
 
         mov     edx, [esp + 00]
@@ -528,7 +613,7 @@ __declspec(naked) void animatedTextureFix() {
     __asm {
         PUSH    ESI
 
-        MOV     ESI, 0x10CCADA0
+        MOV     ESI, 0x10CCADA0 // not precise
         FLD     QWORD PTR[ESI]
 
         FMUL    dword ptr[oneHundred]
@@ -571,8 +656,6 @@ void printTest() {
     logger_->log("id: " + std::to_string(id));
     logger_->log("hexid: " + toHexString(id));
     logger_->log("hexidoffset: " + toHexString(id * 4));
-    logger_->log("offs: " + toHexString(offs));
-    logger_->log("offs*4: " + toHexString(offs * 4));
     logger_->log("flags: " + toHexString(flags));
     logger_->log("unknown: " + toHexString(unknown));
 
@@ -690,8 +773,17 @@ void CodeCaves::Initialize()
 {
     if (Config::applyAnimationFix)
         WriteJump(animatedTextureFixEntry, animatedTextureFix);
-    frameRateLimit = Config::frameRateLimit;
+    
+    switch (Config::frameTimingMode) {
+    default:
+        WriteJump(startFrameTimerEntry, beforePresent);
+        WriteJump(endFrameTimerEntry, afterPresent);
+        WriteJump(endFrameTimer2Entry, afterPresent);
+        break;
+    case 2:
     WriteJump(fixSleepTimerEntry, fixSleepTimer);
+        break;
+    }
 
     WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
@@ -708,8 +800,6 @@ void CodeCaves::Initialize()
         WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
     }
 
-#if DISSECT
-    WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
-    WriteJump(0x1093B590, test);
-#endif
+    //WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
+    //WriteJump(0x1093B590, test);
 }
