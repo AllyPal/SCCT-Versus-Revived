@@ -18,7 +18,7 @@ bool Config::mouseInputFix;
 
 void Config::Initialize(std::wstring& configFilePath) {
     configFilePathRef = &configFilePath;
-    frameRateLimit = 90;
+    frameRateLimit = 60;
     frameTime = 1000 / frameRateLimit;
     frameTimingMode = 1;
     applyAnimationFix = true;
@@ -35,7 +35,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             nlohmann::json jsonConfig;
             configFile >> jsonConfig;
 
-            frameRateLimit = jsonConfig.value("frameRateLimit", 90);
+            frameRateLimit = jsonConfig.value("frameRateLimit", 60);
             frameTime = 1000 / frameRateLimit;
             frameTimingMode = jsonConfig.value("frameTimingMode", 1);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
