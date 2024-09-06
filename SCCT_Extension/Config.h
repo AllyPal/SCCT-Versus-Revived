@@ -5,7 +5,6 @@
 class Config {
 public:
     static int frameRateLimit;
-    static int frameTime;
     static int frameTimingMode;
     static bool applyAnimationFix;
     static bool applyWidescreenFix;
