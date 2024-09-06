@@ -331,7 +331,79 @@ __declspec(naked) void Device() {
         jmp     dword ptr[Return]
     }
 }
+void D3DMatrixIdentity(D3DMATRIX* pOut)
+{
+    // Zero out the matrix
+    std::memset(pOut, 0, sizeof(D3DMATRIX));
 
+    // Set the diagonal to 1
+    pOut->m[0][0] = 1.0f;
+    pOut->m[1][1] = 1.0f;
+    pOut->m[2][2] = 1.0f;
+    pOut->m[3][3] = 1.0f;
+}
+
+D3DMATRIX* D3DXMatrixPerspectiveFovLH(D3DMATRIX* pOut, float fovy, float aspect, float zn, float zf)
+{
+    D3DMatrixIdentity(pOut);
+
+    float tanHalfFovy = tanf(fovy / 2.0f);
+    pOut->m[0][0] = 1.0f / (aspect * tanHalfFovy);
+    pOut->m[1][1] = 1.0f / tanHalfFovy;
+    pOut->m[2][2] = zf / (zf - zn);
+    pOut->m[2][3] = 1.0f;
+    pOut->m[3][2] = (zf * zn) / (zn - zf);
+    pOut->m[3][3] = 0.0f;
+
+    return pOut;
+}
+
+float RadToDeg(float radians) {
+    return radians * (180.0f / D3DX_PI);
+}
+
+float DegreesToRadians(float degrees)
+{
+    return degrees * (D3DX_PI / 180.0f);
+}
+
+static float GetOriginalFovY(float m11) {
+    return 2.0f * atanf(1.0f / m11);
+}
+
+static void ApplyMatrixPerspectiveFovLH(D3DMATRIX* projMatrix, float displayWidth, float displayHeight)
+{
+    float fovY = GetOriginalFovY(projMatrix->m[1][1]);// DegreesToRadians(57.0f);
+    /*auto ogFov = RadToDeg(fovY);
+    std::cout << std::format("ogfov:  {:.2f}", ogFov) << std::endl;*/
+    float aspectRatio = displayWidth / displayHeight; // Example resolution
+    float nearClip = 0.1f;// 1.0f;
+    float farClip = 50000.0f;
+
+    D3DXMatrixPerspectiveFovLH(projMatrix, fovY, aspectRatio, nearClip, farClip);
+}
+
+void ApplyWidthScaling(D3DMATRIX* projMatrix, float displayHeight, float displayWidth)
+{
+    if ((projMatrix->_11 < 0.0f) ^ (projMatrix->_22 < 0.0f)) {
+        projMatrix->_22 = (projMatrix->_11 / displayHeight) * displayWidth;
+        projMatrix->_22 *= -1;
+    }
+    else {
+        projMatrix->_22 = (projMatrix->_11 / displayHeight) * displayWidth;
+    }
+}
+
+void ApplyHeightScaling(D3DMATRIX* projMatrix, D3DDISPLAYMODE& d3dDisplayMode)
+{
+    if ((projMatrix->_11 < 0.0f) ^ (projMatrix->_22 < 0.0f)) {
+        projMatrix->_11 = (projMatrix->_22 / d3dDisplayMode.Width) * d3dDisplayMode.Height;
+        projMatrix->_11 *= -1;
+    }
+    else {
+        projMatrix->_11 = (projMatrix->_22 / d3dDisplayMode.Width) * d3dDisplayMode.Height;
+    }
+}
 static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
 {
     D3DDISPLAYMODE d3dDisplayMode;
@@ -339,17 +411,25 @@ static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
 
     float displayHeight = static_cast<float>(d3dDisplayMode.Height);
     float displayWidth = static_cast<float>(d3dDisplayMode.Width);
-    displayWidth = min(displayWidth, d3dDisplayMode.Height * (9.0f/16.0f));
-    float displayAspectRatio = displayHeight / displayWidth;
+    displayWidth = min(displayWidth, d3dDisplayMode.Height * (16.0f / 9.0));
+    //float displayAspectRatio = displayHeight/ displayWidth;
     auto renderAspectRatio = fabs(roundf((projMatrix->_11 / projMatrix->_22) * 100.0f) / 100.0f);
     const float fourByThreeAspect = 0.75f;
-    if (renderAspectRatio == fourByThreeAspect && fabs(projMatrix->_22) > 0.1f) {
-        if ((projMatrix->_11 < 0.0f) ^ (projMatrix->_22 < 0.0f)) {
-            projMatrix->_22 = (projMatrix->_11 / d3dDisplayMode.Height) * d3dDisplayMode.Width;
-            projMatrix->_22 *= -1;
-        }
-        else {
-            projMatrix->_22 = (projMatrix->_11 / d3dDisplayMode.Height) * d3dDisplayMode.Width;
+    if (/*renderAspectRatio == fourByThreeAspect && */fabs(projMatrix->_22) > 0.1f) {
+        /*std::string message = std::format("deg:  {:.2f}", RadToDeg(originalFov);
+        std::cout << message << std::endl;*/
+        int scalingMode = 0;
+        
+        switch (scalingMode) {
+        default:
+            ApplyWidthScaling(projMatrix, displayHeight, displayWidth);
+            break;
+        case 1:
+            ApplyMatrixPerspectiveFovLH(projMatrix, displayWidth, displayHeight);
+            break;
+        case 2:
+            ApplyHeightScaling(projMatrix, d3dDisplayMode);
+            break;
         }
     }
     else {
