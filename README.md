@@ -4,6 +4,7 @@ Enhancements and fixes for Splinter Cell Chaos Theory (SCCT) Versus.
 
 ## Features:
 * Allows users to set a frame limit (no longer capped at 64 FPS on Windows with SCCT Frame Rate Editor/Framer)
+* Allows users to specify a different frame rate limit when hosting.  Currently hosting above 60 fps is not recommended (up from 31 on the stock game)
 * Fixes mouse input at high hz and produces an identical experience at high and low FPS
 * Fixes animated textures/shaders (e.g. the water effect on Aquarius) that run too fast at higher frame rates.  Textures/shaders which already specify a limit will retain their original cap
 * Fixes issue where grenades (frag, chaff, smoke etc) intermittently instantly explode on impact with the floor
