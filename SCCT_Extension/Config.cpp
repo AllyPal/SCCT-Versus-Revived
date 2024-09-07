@@ -6,6 +6,7 @@
 
 static std::wstring* configFilePathRef;
 int Config::frameRateLimit_client;
+bool Config::frameRateLimit_client_unlock;
 int Config::frameRateLimit_hosting;
 int Config::frameTimingMode;
 bool Config::applyAnimationFix;
@@ -19,6 +20,7 @@ bool Config::mouseInputFix;
 void Config::Initialize(std::wstring& configFilePath) {
     configFilePathRef = &configFilePath;
     frameRateLimit_client = 60;
+    frameRateLimit_client_unlock = false;
     frameRateLimit_hosting = 60;
     frameTimingMode = 1;
     applyAnimationFix = true;
@@ -36,6 +38,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             configFile >> jsonConfig;
 
             frameRateLimit_client = jsonConfig.value("frameRateLimit_client", 60);
+            frameRateLimit_client_unlock = jsonConfig.value("frameRateLimit_client_unlock", false);
             frameRateLimit_hosting = jsonConfig.value("frameRateLimit_hosting", 60);
             frameTimingMode = jsonConfig.value("frameTimingMode", 1);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
@@ -102,6 +105,8 @@ void Config::Serialize() {
             nlohmann::json jsonConfig;
 
             jsonConfig["frameRateLimit_client"] = frameRateLimit_client;
+
+            jsonConfig["frameRateLimit_client_unlock"] = frameRateLimit_client_unlock;
 
             jsonConfig["frameRateLimit_hosting"] = frameRateLimit_hosting;
 

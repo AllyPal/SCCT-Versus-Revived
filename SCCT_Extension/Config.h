@@ -9,6 +9,7 @@ public:
     static int frameTimingMode;
     static bool applyAnimationFix;
     static bool applyWidescreenFix;
+    static bool frameRateLimit_client_unlock;
 
     static bool useDirectConnect;
     static std::wstring directConnectIp;

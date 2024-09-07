@@ -528,6 +528,14 @@ int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t me
     return result;
 }
 
+static int removeClientFpsCapEntry = 0x1090801C;
+__declspec(naked) void removeClientFpsCap() {
+    static int Return = 0x10908063;
+    __asm {
+        jmp dword ptr[Return]
+    }
+}
+
 
 static int sendBroadcastLanMessageEntry = 0x10AB3911;
 __declspec(naked) void sendBroadcastLanMessage() {
@@ -899,6 +907,8 @@ void CodeCaves::Initialize()
     WriteJump(fixSleepTimerEntry, fixSleepTimer);
         break;
     }
+    if (Config::frameRateLimit_client_unlock)
+        WriteJump(removeClientFpsCapEntry, removeClientFpsCap);
 
     WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
