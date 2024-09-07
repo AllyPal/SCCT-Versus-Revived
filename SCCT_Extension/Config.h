@@ -4,8 +4,8 @@
 
 class Config {
 public:
-    static int frameRateLimit;
-    static int listenServerFrameRateLimit;
+    static int frameRateLimit_client;
+    static int frameRateLimit_hosting;
     static int frameTimingMode;
     static bool applyAnimationFix;
     static bool applyWidescreenFix;

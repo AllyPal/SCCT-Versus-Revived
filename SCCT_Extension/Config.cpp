@@ -5,8 +5,8 @@
 #include "include/nlohmann/json.hpp"
 
 static std::wstring* configFilePathRef;
-int Config::frameRateLimit;
-int Config::listenServerFrameRateLimit;
+int Config::frameRateLimit_client;
+int Config::frameRateLimit_hosting;
 int Config::frameTimingMode;
 bool Config::applyAnimationFix;
 bool Config::applyWidescreenFix;
@@ -18,8 +18,8 @@ bool Config::mouseInputFix;
 
 void Config::Initialize(std::wstring& configFilePath) {
     configFilePathRef = &configFilePath;
-    frameRateLimit = 60;
-    listenServerFrameRateLimit = 60;
+    frameRateLimit_client = 60;
+    frameRateLimit_hosting = 60;
     frameTimingMode = 1;
     applyAnimationFix = true;
     applyWidescreenFix = true;
@@ -35,8 +35,8 @@ void Config::Initialize(std::wstring& configFilePath) {
             nlohmann::json jsonConfig;
             configFile >> jsonConfig;
 
-            frameRateLimit = jsonConfig.value("frameRateLimit", 60);
-            listenServerFrameRateLimit = jsonConfig.value("listenServerFrameRateLimit", 60);
+            frameRateLimit_client = jsonConfig.value("frameRateLimit_client", 60);
+            frameRateLimit_hosting = jsonConfig.value("frameRateLimit_hosting", 60);
             frameTimingMode = jsonConfig.value("frameTimingMode", 1);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
             applyWidescreenFix = jsonConfig.value("applyWidescreenFix", true);
@@ -101,9 +101,9 @@ void Config::Serialize() {
         try {
             nlohmann::json jsonConfig;
 
-            jsonConfig["frameRateLimit"] = frameRateLimit;
+            jsonConfig["frameRateLimit_client"] = frameRateLimit_client;
 
-            jsonConfig["listenServerFrameRateLimit"] = listenServerFrameRateLimit;
+            jsonConfig["frameRateLimit_hosting"] = frameRateLimit_hosting;
 
             jsonConfig["frameTimingMode"] = frameTimingMode;
 

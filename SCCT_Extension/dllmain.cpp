@@ -61,7 +61,8 @@ BOOL CALLBACK InitFunction(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
     logger->log(L"Loading " + configPath);
     Config::Initialize(configPath);
     logger->log(L"applyAnimationFix: " + std::to_wstring(Config::applyAnimationFix));
-    logger->log(L"frameRateLimit:" + std::to_wstring(Config::frameRateLimit));
+    logger->log(L"frameRateLimit_hosting:" + std::to_wstring(Config::frameRateLimit_hosting));
+    logger->log(L"frameRateLimit_client:" + std::to_wstring(Config::frameRateLimit_client));
 
     CodeCaves caves(logger);
     caves.Initialize();

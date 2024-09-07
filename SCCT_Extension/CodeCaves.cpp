@@ -594,10 +594,10 @@ std::chrono::steady_clock::time_point nextFrameTime;
 void UpdateLastFrameRenderedTime() {
     double frameRateLimit;
     if (IsListenServer()) {
-        frameRateLimit = (double)Config::listenServerFrameRateLimit;
+        frameRateLimit = (double)Config::frameRateLimit_hosting;
     }
     else {
-        frameRateLimit = (double)Config::frameRateLimit;
+        frameRateLimit = (double)Config::frameRateLimit_client;
     }
     double frameTimeSeconds = (double)1.0 / frameRateLimit;
     auto frameTimeNanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -674,10 +674,10 @@ __declspec(naked) void fixSleepTimer() {
         pushad
     }
     if (IsListenServer()) {
-        frameRateLimit = Config::listenServerFrameRateLimit;
+        frameRateLimit = Config::frameRateLimit_hosting;
     }
     else {
-        frameRateLimit = Config::frameRateLimit;
+        frameRateLimit = Config::frameRateLimit_client;
     }
     __asm {
         popad
