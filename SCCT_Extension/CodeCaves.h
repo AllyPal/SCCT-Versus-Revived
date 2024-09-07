@@ -21,3 +21,14 @@ public:
 	CodeCaves(Logger* logger2);
 	void Initialize();
 };
+
+struct LvIn {
+	std::byte unspecified[0x4A8];
+	enum NetMode
+	{
+		NotMultiplayer,
+		DedicatedServer,
+		ListenServer,
+		Client
+	} NetMode;
+};

@@ -57,6 +57,22 @@ void PrintTest() {
     std::cout << "Redirected" << std::endl;
 }
 
+LvIn* lvIn = nullptr;
+int SetLvInEntry = 0x109ADFB3;
+__declspec(naked) void SetLvIn() {
+    __asm {
+        mov [lvIn], esi
+        ret
+    }
+}
+
+bool IsListenServer() {
+    if (lvIn == nullptr) {
+        return false;
+    }
+    return lvIn->NetMode == LvIn::NetMode::ListenServer;
+}
+
 static int xMouseDelta = 0;
 static int yMouseDelta = 0;
 
@@ -576,9 +592,16 @@ float GetPerformance() {
 
 std::chrono::steady_clock::time_point nextFrameTime;
 void UpdateLastFrameRenderedTime() {
-    double frameTimeSeconds = (double)1.0 / (double)Config::frameRateLimit;
+    double frameRateLimit;
+    if (IsListenServer()) {
+        frameRateLimit = (double)Config::listenServerFrameRateLimit;
+    }
+    else {
+        frameRateLimit = (double)Config::frameRateLimit;
+    }
+    double frameTimeSeconds = (double)1.0 / frameRateLimit;
     auto frameTimeNanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::duration<double>((double)1.0 / (double)Config::frameRateLimit)
+        std::chrono::duration<double>((double)1.0 / frameRateLimit)
     ).count();
 
     nextFrameTime = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(frameTimeNanoseconds);
@@ -642,12 +665,24 @@ __declspec(naked) void beforePresent() {
 
 }
 
+// TODO: Remove this approach. Inferior to the others
 int fixSleepTimerEntry = 0x1095E340;
 const int fixSleepTimerReturn = 0x1095E38D;
 __declspec(naked) void fixSleepTimer() {
+    static int frameRateLimit;
     __asm {
-        mov     eax, dword ptr[Config::frameRateLimit]
-        fild    dword ptr[Config::frameRateLimit]
+        pushad
+    }
+    if (IsListenServer()) {
+        frameRateLimit = Config::listenServerFrameRateLimit;
+    }
+    else {
+        frameRateLimit = Config::frameRateLimit;
+    }
+    __asm {
+        popad
+        mov     eax, dword ptr[frameRateLimit]
+        fild    dword ptr[frameRateLimit]
         test    eax, eax
         jge     loc_1095E356
         mov     eax, 0x10C10A24
@@ -872,6 +907,7 @@ void CodeCaves::Initialize()
     if (Config::applyWidescreenFix)
         WriteJump(SetProjectionEntry, SetProjection);
     WriteJump(DPPEntry, DPP);
+    WriteJump(SetLvInEntry, SetLvIn);
 
     if (Config::mouseInputFix) {
         WriteJump(DisableMouseInputEntry, DisableMouseInput);
