@@ -22,13 +22,17 @@ public:
 	void Initialize();
 };
 
+
+enum NetMode {
+    NotMultiplayer,
+    DedicatedServer,
+    ListenServer,
+    Client
+};
 struct LvIn {
-	std::byte unspecified[0x4A8];
-	enum NetMode
-	{
-		NotMultiplayer,
-		DedicatedServer,
-		ListenServer,
-		Client
-	} NetMode;
+    std::byte unspecified[0x1000];
+
+    NetMode& netMode() {
+        return *reinterpret_cast<NetMode*>(unspecified + (0x4A8));
+    }
 };

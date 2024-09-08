@@ -70,7 +70,7 @@ bool IsListenServer() {
     if (lvIn == nullptr) {
         return false;
     }
-    return lvIn->NetMode == LvIn::NetMode::ListenServer;
+    return lvIn->netMode() == NetMode::ListenServer;
 }
 
 static int xMouseDelta = 0;
@@ -788,6 +788,7 @@ int flags = 0;
 int unknown = 0;
 uintptr_t dummy4;
 int offs = 0;
+int addr = 0;
 
 void printTest() {
     wchar_t* unicodeStringPtr = reinterpret_cast<wchar_t*>(dummy4);
@@ -798,6 +799,7 @@ void printTest() {
     logger_->log("hexidoffset: " + toHexString(id * 4));
     logger_->log("flags: " + toHexString(flags));
     logger_->log("unknown: " + toHexString(unknown));
+    logger_->log("addr: " + toHexString(addr));
 
     
     logger_->log("");
@@ -840,7 +842,7 @@ __declspec(naked) void test() {
 
         mov eax, dword ptr[imp_wcscpy]
         call[eax]
-
+        mov [addr], esi
         mov eax, [esi]
         mov [id], eax
         mov eax, [esi+4]
@@ -946,5 +948,5 @@ void CodeCaves::Initialize()
     }
 
     //WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
-    //WriteJump(0x1093B590, test);
+    WriteJump(0x1093B590, test);
 }
