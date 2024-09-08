@@ -420,6 +420,7 @@ void ApplyHeightScaling(D3DMATRIX* projMatrix, D3DDISPLAYMODE& d3dDisplayMode)
         projMatrix->_11 = (projMatrix->_22 / d3dDisplayMode.Width) * d3dDisplayMode.Height;
     }
 }
+
 static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
 {
     D3DDISPLAYMODE d3dDisplayMode;
@@ -431,7 +432,7 @@ static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
     //float displayAspectRatio = displayHeight/ displayWidth;
     auto renderAspectRatio = fabs(roundf((projMatrix->_11 / projMatrix->_22) * 100.0f) / 100.0f);
     const float fourByThreeAspect = 0.75f;
-    if (/*renderAspectRatio == fourByThreeAspect && */fabs(projMatrix->_22) > 0.1f) {
+    if (renderAspectRatio == fourByThreeAspect && fabs(projMatrix->_22) > 0.1f) {
         /*std::string message = std::format("deg:  {:.2f}", RadToDeg(originalFov);
         std::cout << message << std::endl;*/
         int scalingMode = 0;
@@ -453,15 +454,48 @@ static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
     }
 }
 
-int SetProjectionEntry = 0x1096CA07;
-__declspec(naked) void SetProjection() {
+int SetProjection1Entry = 0x1096CA07;
+__declspec(naked) void SetProjection1() {
     static D3DMATRIX* projMatrix;
     static int Return = 0x1096CA0D;
     __asm {
         pushad
-
-        mov     eax, [ebp]
         mov     dword ptr[projMatrix], ebp
+    }
+    SetupProjectionMatrix(projMatrix);
+
+    __asm {
+        popad
+        call    dword ptr[ecx + 0x94]
+        jmp     dword ptr[Return]
+    }
+}
+
+int SetProjection2Entry = 0x1097827B;
+__declspec(naked) void SetProjection2() {
+    static D3DMATRIX* projMatrix;
+    static int Return = 0x10978281;
+    __asm {
+        pushad
+        mov     dword ptr[projMatrix], edx
+    }
+    SetupProjectionMatrix(projMatrix);
+
+    __asm {
+        popad
+        call    dword ptr[ecx + 0x94]
+        jmp     dword ptr[Return]
+    }
+}
+
+int SetProjection3Entry = 0x1096BC07; 
+__declspec(naked) void SetProjection3() {
+    static D3DMATRIX* projMatrix;
+    static int Return = 0x1096BC0D;
+    __asm {
+        pushad
+        mov eax, dword ptr[0x10CC9560]
+        mov     dword ptr[projMatrix], eax
     }
     SetupProjectionMatrix(projMatrix);
 
@@ -935,8 +969,12 @@ void CodeCaves::Initialize()
     WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
     WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
     WriteJump(DeviceEntry, Device);
-    if (Config::applyWidescreenFix)
-        WriteJump(SetProjectionEntry, SetProjection);
+    if (Config::applyWidescreenFix) {
+        WriteJump(SetProjection1Entry, SetProjection1);
+        WriteJump(SetProjection2Entry, SetProjection2);
+        // May be redundant
+        WriteJump(SetProjection3Entry, SetProjection3);
+    }
     WriteJump(DPPEntry, DPP);
     WriteJump(SetLvInEntry, SetLvIn);
 
@@ -948,5 +986,5 @@ void CodeCaves::Initialize()
     }
 
     //WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
-    WriteJump(0x1093B590, test);
+    //WriteJump(0x1093B590, test);
 }
