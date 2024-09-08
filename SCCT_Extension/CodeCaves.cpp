@@ -638,13 +638,8 @@ void preciseSleep() {
     preciseSpin();
 }
 
-int endFrameTimerEntry = 0x1095E417;
-int endFrameTimer2Entry = 0x1095E43C;
-__declspec(naked) void afterPresent() {
-    __asm {
-        pushad
-    }
-   switch (Config::frameTimingMode) {
+void LimitFrameRate() {
+    switch (Config::frameTimingMode) {
     default:
         preciseSpin();
         break;
@@ -652,13 +647,35 @@ __declspec(naked) void afterPresent() {
         preciseSleep();
         break;
     }
-    preciseSpin();
-    
+
+    UpdateLastFrameRenderedTime();
+}
+
+//int endFrameTimerEntry = 0x1095E417;
+//int endFrameTimer2Entry = 0x1095E43C;
+//__declspec(naked) void afterPresent() {
+//    __asm {
+//        pushad
+//    }
+//    LimitFrameRate();
+//    __asm {
+//        popad
+//        add     esp, 0x14
+//        retn    0x4
+//    }
+//}
+
+int alternativeFrameModeEntry = 0x109EC82F;
+__declspec(naked) void alternativeFrameMode() {
+    __asm {
+        pushad
+    }
+    LimitFrameRate();
+
     UpdateLastFrameRenderedTime();
     __asm {
         popad
-        add     esp, 0x14
-        retn    0x4
+        retn    0x10
     }
 }
 
@@ -900,8 +917,10 @@ void CodeCaves::Initialize()
     switch (Config::frameTimingMode) {
     default:
         WriteJump(startFrameTimerEntry, beforePresent);
-        WriteJump(endFrameTimerEntry, afterPresent);
-        WriteJump(endFrameTimer2Entry, afterPresent);
+        //WriteJump(endFrameTimerEntry, afterPresent);
+        //WriteJump(endFrameTimer2Entry, afterPresent);
+        
+        WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
         break;
     case 2:
     WriteJump(fixSleepTimerEntry, fixSleepTimer);
