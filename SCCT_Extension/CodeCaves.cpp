@@ -725,19 +725,67 @@ void LimitFrameRate() {
     UpdateLastFrameRenderedTime();
 }
 
-//int endFrameTimerEntry = 0x1095E417;
-//int endFrameTimer2Entry = 0x1095E43C;
-//__declspec(naked) void afterPresent() {
-//    __asm {
-//        pushad
-//    }
-//    LimitFrameRate();
-//    __asm {
-//        popad
-//        add     esp, 0x14
-//        retn    0x4
-//    }
-//}
+double ConvertFOV(double horizontalFOV, double originalAspectRatio, double newAspectRatio) {
+    double horizontalFOVRad = horizontalFOV * D3DX_PI / 180.0;
+    double originalAspectRatioWidth = 4.0;
+    double originalAspectRatioHeight = 3.0;
+    double verticalFOVRad = 2 * atan(tan(horizontalFOVRad / 2) * originalAspectRatioHeight / originalAspectRatioWidth);
+    double verticalFOV = verticalFOVRad * 180.0 / D3DX_PI;
+    double newAspectRatioWidth = newAspectRatio;
+    double newAspectRatioHeight = 1.0;
+    double newHorizontalFOVRad = 2 * atan(tan(verticalFOVRad / 2) * newAspectRatioWidth / newAspectRatioHeight);
+    double newHorizontalFOV = newHorizontalFOVRad * 180.0 / D3DX_PI;
+    return newHorizontalFOV;
+}
+
+
+UINT displayHeight = 0;
+UINT displayWidth = 0;
+float originalSfv = 0.0;
+float originalDfv = 0.0;
+float hSfv = 0.0;
+float hDfv = 0.0;
+void WidescreenViewFix() {
+    if (lvIn != NULL && pDevice != NULL) {
+        // Copy/pasted.  TODO: Refactor
+        D3DDISPLAYMODE d3dDisplayMode;
+        pDevice->GetDisplayMode(&d3dDisplayMode);
+        if (displayWidth != d3dDisplayMode.Width || displayHeight != d3dDisplayMode.Height) {
+            float displayHeight = static_cast<float>(d3dDisplayMode.Height);
+            float displayWidth = static_cast<float>(d3dDisplayMode.Width);
+            displayWidth = min(displayWidth, d3dDisplayMode.Height * (16.0f / 9.0));
+
+            if (originalSfv == 0.0) {
+                originalSfv = lvIn->lPlC().Sfv();
+                originalDfv = lvIn->lPlC().Dfv();
+            }
+
+            hSfv = ConvertFOV(originalSfv, (float)4/3, (float)16 / 9);
+            hDfv = ConvertFOV(originalDfv, (float)4 / 3, (float)16 / 9);
+
+            // last calculated
+            displayHeight = d3dDisplayMode.Height;
+            displayWidth = d3dDisplayMode.Width;
+        }
+
+        lvIn->lPlC().Sfv() = hSfv;
+        lvIn->lPlC().Dfv() = hDfv;
+    }
+}
+
+int viewFixEntry = 0x1095E417;
+int viewFix2Entry = 0x1095E43C;
+__declspec(naked) void viewFix() {
+    __asm {
+        pushad
+    }
+    WidescreenViewFix();
+    __asm {
+        popad
+        add     esp, 0x14
+        retn    0x4
+    }
+}
 
 int alternativeFrameModeEntry = 0x109EC82F;
 __declspec(naked) void alternativeFrameMode() {
@@ -765,62 +813,62 @@ __declspec(naked) void beforePresent() {
 }
 
 // TODO: Remove this approach. Inferior to the others
-int fixSleepTimerEntry = 0x1095E340;
-const int fixSleepTimerReturn = 0x1095E38D;
-__declspec(naked) void fixSleepTimer() {
-    static int frameRateLimit;
-    __asm {
-        pushad
-    }
-    if (IsListenServer()) {
-        frameRateLimit = Config::frameRateLimit_hosting;
-    }
-    else {
-        frameRateLimit = Config::frameRateLimit_client;
-    }
-    __asm {
-        popad
-        mov     eax, dword ptr[frameRateLimit]
-        fild    dword ptr[frameRateLimit]
-        test    eax, eax
-        jge     loc_1095E356
-        mov     eax, 0x10C10A24
-        fadd    dword ptr[eax]
-        loc_1095E356:
-        fdivr dword ptr[one]
-        fld     st(1)
-        fcomp   st(1)
-        fnstsw  ax
-        test    ah, 0x05
-        jp      loc_1095E389
-        fsub    st(0), st(1)
-        fmul    qword ptr[oneThousand]
-        call    dword ptr[ToMilliseconds]
-        fstp    st(0)
-        push    eax
-
-        push    0x1
-        mov     eax, dword ptr[timeBeginPeriodAddr]
-        call    dword ptr[eax]
-
-        mov     eax, dword ptr[sleep]
-        call    dword ptr[eax]
-
-        push    0x1
-        mov     eax, dword ptr[timeEndPeriodAddr]
-        call    dword ptr[eax]
-
-        mov     edx, [esp + 00]
-        jmp     fixSleepTimerEnd
-
-        loc_1095E389 :
-        fstp    st(0)
-        fstp    st(0)
-
-        fixSleepTimerEnd :
-        jmp     dword ptr[fixSleepTimerReturn]
-    }
-}
+//int fixSleepTimerEntry = 0x1095E340;
+//const int fixSleepTimerReturn = 0x1095E38D;
+//__declspec(naked) void fixSleepTimer() {
+//    static int frameRateLimit;
+//    __asm {
+//        pushad
+//    }
+//    if (IsListenServer()) {
+//        frameRateLimit = Config::frameRateLimit_hosting;
+//    }
+//    else {
+//        frameRateLimit = Config::frameRateLimit_client;
+//    }
+//    __asm {
+//        popad
+//        mov     eax, dword ptr[frameRateLimit]
+//        fild    dword ptr[frameRateLimit]
+//        test    eax, eax
+//        jge     loc_1095E356
+//        mov     eax, 0x10C10A24
+//        fadd    dword ptr[eax]
+//        loc_1095E356:
+//        fdivr dword ptr[one]
+//        fld     st(1)
+//        fcomp   st(1)
+//        fnstsw  ax
+//        test    ah, 0x05
+//        jp      loc_1095E389
+//        fsub    st(0), st(1)
+//        fmul    qword ptr[oneThousand]
+//        call    dword ptr[ToMilliseconds]
+//        fstp    st(0)
+//        push    eax
+//
+//        push    0x1
+//        mov     eax, dword ptr[timeBeginPeriodAddr]
+//        call    dword ptr[eax]
+//
+//        mov     eax, dword ptr[sleep]
+//        call    dword ptr[eax]
+//
+//        push    0x1
+//        mov     eax, dword ptr[timeEndPeriodAddr]
+//        call    dword ptr[eax]
+//
+//        mov     edx, [esp + 00]
+//        jmp     fixSleepTimerEnd
+//
+//        loc_1095E389 :
+//        fstp    st(0)
+//        fstp    st(0)
+//
+//        fixSleepTimerEnd :
+//        jmp     dword ptr[fixSleepTimerReturn]
+//    }
+//}
 
 int animatedTextureFixEntry = 0x109F2561;
 __declspec(naked) void animatedTextureFix() {
@@ -1015,6 +1063,9 @@ void CodeCaves::Initialize()
         WriteJump(SetProjection2Entry, SetProjection2);
         // May be redundant
         WriteJump(SetProjection3Entry, SetProjection3);
+
+        WriteJump(viewFixEntry, viewFix);
+        WriteJump(viewFix2Entry, viewFix);
     }
     WriteJump(DPPEntry, DPP);
     WriteJump(SetLvInEntry, SetLvIn);

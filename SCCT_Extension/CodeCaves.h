@@ -22,6 +22,16 @@ public:
 	void Initialize();
 };
 
+struct PlC {
+    std::byte unspecified[0x1000];
+    float& Dfv() {
+        return *reinterpret_cast<float*>(unspecified + (0xA44));
+    }
+
+    float& Sfv() {
+        return *reinterpret_cast<float*>(unspecified + (0xA48));
+    }
+};
 
 enum NetMode {
     NotMultiplayer,
@@ -34,5 +44,9 @@ struct LvIn {
 
     NetMode& netMode() {
         return *reinterpret_cast<NetMode*>(unspecified + (0x4A8));
+    }
+
+    PlC& lPlC() {
+        return **reinterpret_cast<PlC**>(unspecified + (0x514));
     }
 };
