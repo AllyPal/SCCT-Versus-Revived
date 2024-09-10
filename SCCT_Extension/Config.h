@@ -9,7 +9,8 @@ public:
     static int frameRateLimit_hosting;
     static int frameTimingMode;
     static bool applyAnimationFix;
-    static bool applyWidescreenFix;
+    static bool widescreenAspectRatioFix;
+    static float widescreenFovCap;
     static bool frameRateLimit_client_unlock;
     static std::vector<std::string> serverList;
 

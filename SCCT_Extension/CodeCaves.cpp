@@ -725,19 +725,18 @@ void LimitFrameRate() {
     UpdateLastFrameRenderedTime();
 }
 
-double ConvertFOV(double horizontalFOV, double originalAspectRatio, double newAspectRatio) {
+double ConvertFOV(double horizontalFOV, double newAspectRatio) {
     double horizontalFOVRad = horizontalFOV * D3DX_PI / 180.0;
     double originalAspectRatioWidth = 4.0;
     double originalAspectRatioHeight = 3.0;
     double verticalFOVRad = 2 * atan(tan(horizontalFOVRad / 2) * originalAspectRatioHeight / originalAspectRatioWidth);
     double verticalFOV = verticalFOVRad * 180.0 / D3DX_PI;
     double newAspectRatioWidth = newAspectRatio;
-    double newAspectRatioHeight = 1.0;
-    double newHorizontalFOVRad = 2 * atan(tan(verticalFOVRad / 2) * newAspectRatioWidth / newAspectRatioHeight);
+    double newHorizontalFOVRad = 2 * atan(tan(verticalFOVRad / 2) * newAspectRatioWidth);
     double newHorizontalFOV = newHorizontalFOVRad * 180.0 / D3DX_PI;
-    return newHorizontalFOV;
-}
 
+    return min(newHorizontalFOV, Config::widescreenFovCap);
+}
 
 UINT displayHeight = 0;
 UINT displayWidth = 0;
@@ -759,9 +758,9 @@ void WidescreenViewFix() {
                 originalSfv = lvIn->lPlC().Sfv();
                 originalDfv = lvIn->lPlC().Dfv();
             }
-
-            hSfv = ConvertFOV(originalSfv, (float)4/3, (float)16 / 9);
-            hDfv = ConvertFOV(originalDfv, (float)4 / 3, (float)16 / 9);
+            auto aspectRatio = displayWidth / displayHeight;
+            hSfv = ConvertFOV(originalSfv, aspectRatio);
+            hDfv = ConvertFOV(originalDfv, aspectRatio);
 
             // last calculated
             displayHeight = d3dDisplayMode.Height;
@@ -1000,9 +999,6 @@ __declspec(naked) void test() {
 }
 
 
-
-
-
 bool __cdecl WriteJump(uintptr_t targetAddress, void(*function)()) {
     logger_->log("Writing jump at " + toHexString(targetAddress));
     uintptr_t functionAddress = reinterpret_cast<uintptr_t>(function);
@@ -1041,13 +1037,7 @@ void CodeCaves::Initialize()
     switch (Config::frameTimingMode) {
     default:
         WriteJump(startFrameTimerEntry, beforePresent);
-        //WriteJump(endFrameTimerEntry, afterPresent);
-        //WriteJump(endFrameTimer2Entry, afterPresent);
-
         WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
-        break;
-    case 2:
-        WriteJump(fixSleepTimerEntry, fixSleepTimer);
         break;
     }
     if (Config::frameRateLimit_client_unlock)
@@ -1058,7 +1048,7 @@ void CodeCaves::Initialize()
     WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
     WriteJump(DeviceEntry, Device);
 
-    if (Config::applyWidescreenFix) {
+    if (Config::widescreenAspectRatioFix) {
         WriteJump(SetProjection1Entry, SetProjection1);
         WriteJump(SetProjection2Entry, SetProjection2);
         // May be redundant

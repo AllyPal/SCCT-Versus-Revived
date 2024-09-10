@@ -11,7 +11,8 @@ bool Config::frameRateLimit_client_unlock;
 int Config::frameRateLimit_hosting;
 int Config::frameTimingMode;
 bool Config::applyAnimationFix;
-bool Config::applyWidescreenFix;
+bool Config::widescreenAspectRatioFix;
+float Config::widescreenFovCap;
 
 bool Config::useDirectConnect;
 std::wstring Config::directConnectIp;
@@ -27,7 +28,8 @@ void Config::Initialize(std::wstring& configFilePath) {
     frameRateLimit_hosting = 60;
     frameTimingMode = 1;
     applyAnimationFix = true;
-    applyWidescreenFix = true;
+    widescreenAspectRatioFix = true;
+    widescreenFovCap = 105.0;
     useDirectConnect = false;
     directConnectIp = L"";
     directConnectPort = L"";
@@ -45,7 +47,8 @@ void Config::Initialize(std::wstring& configFilePath) {
             frameRateLimit_hosting = jsonConfig.value("frameRateLimit_hosting", 60);
             frameTimingMode = jsonConfig.value("frameTimingMode", 1);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
-            applyWidescreenFix = jsonConfig.value("applyWidescreenFix", true);
+            widescreenAspectRatioFix = jsonConfig.value("widescreenAspectRatioFix", true);
+            widescreenFovCap = jsonConfig.value("widescreenFovCap", 105.0);
             mouseInputFix = jsonConfig.value("mouseInputFix", true);
             serverList = jsonConfig.value("serverList", std::vector<std::string> {});
 
@@ -120,7 +123,9 @@ void Config::Serialize() {
 
             jsonConfig["mouseInputFix"] = mouseInputFix;
 
-            jsonConfig["applyWidescreenFix"] = applyWidescreenFix;
+            jsonConfig["widescreenAspectRatioFix"] = widescreenAspectRatioFix;
+
+            jsonConfig["widescreenFovCap"] = widescreenFovCap;
 
             jsonConfig["serverList"] = serverList;
 
