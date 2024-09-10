@@ -523,11 +523,38 @@ __declspec(naked) void SetProjection3() {
 //    setsockopt(socket, SOL_SOCKET, SO_BROADCAST, &optVal, 4);
 //}
 
+int SendPacket(sockaddr_in& to, uintptr_t messagePtr, SOCKET _socket, int messageLength)
+{
+    char ipAddress[20];
+    inet_ntop(AF_INET, &to.sin_addr, ipAddress, sizeof(ipAddress));
+
+    std::cout << "Preparing to send message:" << std::endl;
+    std::cout << "  sin_family: " << to.sin_family << std::endl;
+    std::cout << "  sin_port: " << std::dec << ntohs(to.sin_port) << std::endl;
+    std::cout << "  sin_addr.s_addr: " << ipAddress << std::endl;
+
+    auto message = reinterpret_cast<char*>(messagePtr);
+    int result = sendto(_socket, message, messageLength, 0, (struct sockaddr*)&to, sizeof(to));
+
+    if (result == SOCKET_ERROR) {
+        std::cerr << "sendto failed with error: " << WSAGetLastError() << std::endl;
+    }
+    else {
+        std::cout << "Message sent successfully. Bytes sent: " << result << std::endl;
+    }
+
+    return result;
+}
 int result;
 int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t messagePtr, int messageLength) {
     struct sockaddr_in to;
     memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
+    
+    // Send broadcast packet
+    to.sin_port = htons(hostshort);
+    to.sin_addr.s_addr = htonl(hostlong);
+    int result = SendPacket(to, messagePtr, _socket, messageLength);
 
     if (Config::useDirectConnect) {
 #pragma warning(push)
@@ -535,28 +562,41 @@ int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t me
         to.sin_addr.s_addr = inet_addr(WStringToString(Config::directConnectIp).c_str());
 #pragma warning(pop)
         to.sin_port = htons(hostshort);
+        auto directConnectResult = SendPacket(to, messagePtr, _socket, messageLength);
+        if (directConnectResult != SOCKET_ERROR) {
+            result = directConnectResult;
+        }
     }
-    else {
-        to.sin_port = htons(hostshort);
-        to.sin_addr.s_addr = htonl(hostlong);
-    }
 
-    char ipAddress[20];
-    inet_ntop(AF_INET, &to.sin_addr, ipAddress, sizeof(ipAddress));
+    for (const auto& ipPortStr : Config::serverList) {
+        size_t colonPos = ipPortStr.find(':');
+        if (colonPos == std::string::npos) {
+            std::cerr << "Invalid IP:PORT format: " << ipPortStr << std::endl;
+            continue;
+        }
 
-    std::cout << "Preparing to send message:" << std::endl;
-    std::cout << "  sin_family: " << to.sin_family << std::endl;
-    std::cout << "  sin_port: " << std::dec << ntohs(to.sin_port) << " (hostshort: " << hostshort << ")" << std::endl;
-    std::cout << "  sin_addr.s_addr: " << ipAddress << " (hostlong: " << hostlong << ")" << std::endl;
+        std::string ip = ipPortStr.substr(0, colonPos);
+        std::string portStr = ipPortStr.substr(colonPos + 1);
 
-    auto message = reinterpret_cast<char*>(messagePtr);
-    int result = sendto(_socket, message, messageLength, 0, (struct sockaddr*)&to, sizeof(to));
+        unsigned short port = static_cast<unsigned short>(std::stoi(portStr));
 
-    if (result == SOCKET_ERROR ) {
-        std::cerr << "sendto failed with error: " << WSAGetLastError() << std::endl;
-    }
-    else {
-        std::cout << "Message sent successfully. Bytes sent: " << result << std::endl;
+        sockaddr_in to = {};
+        to.sin_family = AF_INET;
+
+        if (inet_pton(AF_INET, ip.c_str(), &to.sin_addr) != 1) {
+            std::cerr << "Invalid IP address format: " << ip << std::endl;
+            continue;
+        }
+
+        to.sin_port = htons(port);
+
+        int slResult = SendPacket(to, messagePtr, _socket, messageLength);
+        if (slResult == SOCKET_ERROR) {
+            std::cerr << "Failed to send packet to " << ipPortStr << std::endl;
+        }
+        else {
+            result = slResult;
+        }
     }
 
     return result;
@@ -949,17 +989,17 @@ void CodeCaves::Initialize()
 {
     if (Config::applyAnimationFix)
         WriteJump(animatedTextureFixEntry, animatedTextureFix);
-    
+
     switch (Config::frameTimingMode) {
     default:
         WriteJump(startFrameTimerEntry, beforePresent);
         //WriteJump(endFrameTimerEntry, afterPresent);
         //WriteJump(endFrameTimer2Entry, afterPresent);
-        
+
         WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
         break;
     case 2:
-    WriteJump(fixSleepTimerEntry, fixSleepTimer);
+        WriteJump(fixSleepTimerEntry, fixSleepTimer);
         break;
     }
     if (Config::frameRateLimit_client_unlock)
@@ -969,6 +1009,7 @@ void CodeCaves::Initialize()
     WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
     WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
     WriteJump(DeviceEntry, Device);
+
     if (Config::applyWidescreenFix) {
         WriteJump(SetProjection1Entry, SetProjection1);
         WriteJump(SetProjection2Entry, SetProjection2);

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include "include/nlohmann/json.hpp"
+#include <vector>
 
 static std::wstring* configFilePathRef;
 int Config::frameRateLimit_client;
@@ -16,6 +17,8 @@ bool Config::useDirectConnect;
 std::wstring Config::directConnectIp;
 std::wstring Config::directConnectPort;
 bool Config::mouseInputFix;
+
+std::vector<std::string> Config::serverList;
 
 void Config::Initialize(std::wstring& configFilePath) {
     configFilePathRef = &configFilePath;
@@ -44,6 +47,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
             applyWidescreenFix = jsonConfig.value("applyWidescreenFix", true);
             mouseInputFix = jsonConfig.value("mouseInputFix", true);
+            serverList = jsonConfig.value("serverList", std::vector<std::string> {});
 
             // Update the file with any new fields
             Serialize();
@@ -117,6 +121,8 @@ void Config::Serialize() {
             jsonConfig["mouseInputFix"] = mouseInputFix;
 
             jsonConfig["applyWidescreenFix"] = applyWidescreenFix;
+
+            jsonConfig["serverList"] = serverList;
 
             configFile << jsonConfig.dump(4);
         }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 class Config {
 public:
@@ -10,6 +11,7 @@ public:
     static bool applyAnimationFix;
     static bool applyWidescreenFix;
     static bool frameRateLimit_client_unlock;
+    static std::vector<std::string> serverList;
 
     static bool useDirectConnect;
     static std::wstring directConnectIp;
