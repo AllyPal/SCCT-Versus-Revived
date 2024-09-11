@@ -332,11 +332,12 @@ void DebugD3D() {
 }
 
 bool IsSetProcessMitigationPolicySupported() {
-    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
+    if (hKernel32 != NULL) {
+        auto SetProcessMitigationPolicy = GetProcAddress(hKernel32, "SetProcessMitigationPolicy");
+        FreeLibrary(hKernel32);
 
-    if (hKernel32) {
-        void* pSetProcessMitigationPolicy = (void*)GetProcAddress(hKernel32, "SetProcessMitigationPolicy");
-        return pSetProcessMitigationPolicy != nullptr;
+        return SetProcessMitigationPolicy != NULL;
     }
 
     return false;
