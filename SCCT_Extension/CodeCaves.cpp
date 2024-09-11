@@ -331,6 +331,26 @@ void DebugD3D() {
     std::wcout << std::fixed << std::hex << "MaxPixelShaderValue: " << caps.MaxPixelShaderValue << std::endl;
 }
 
+// Enables features which reduce the risks of potential buffer overflow vulernabilities in the base game
+void EnableProcessSecurity()
+{
+    PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy = {};
+    policy.ProhibitDynamicCode = 1;
+    if (SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy, sizeof(policy))) {
+        std::cout << "ACG enabled" << std::endl;
+    }
+
+    if (SetProcessDEPPolicy(PROCESS_DEP_ENABLE)) {
+        std::cout << "DEP enabled" << std::endl;
+    }
+}
+bool initialized = false;
+void OnDeviceCreated() {
+    if (!initialized) {
+        EnableProcessSecurity();
+        initialized = true;
+    }
+}
 
 int DeviceEntry = 0x1095CAAA;
 __declspec(naked) void Device() {
@@ -341,7 +361,7 @@ __declspec(naked) void Device() {
         pushad
         mov     [pDevice], eax
     }
-    //DebugD3D();
+    OnDeviceCreated();
     __asm {
         popad
         jmp     dword ptr[Return]
@@ -1010,7 +1030,6 @@ __declspec(naked) void test() {
     }
 }
 
-
 bool __cdecl WriteJump(uintptr_t targetAddress, void(*function)()) {
     logger_->log("Writing jump at " + toHexString(targetAddress));
     uintptr_t functionAddress = reinterpret_cast<uintptr_t>(function);
@@ -1069,6 +1088,7 @@ void CodeCaves::Initialize()
         WriteJump(viewFixEntry, viewFix);
         WriteJump(viewFix2Entry, viewFix);
     }
+
     WriteJump(DPPEntry, DPP);
     WriteJump(SetLvInEntry, SetLvIn);
 
@@ -1078,7 +1098,6 @@ void CodeCaves::Initialize()
         WriteJump(X_WriteMouseInputEntry, X_WriteMouseInput);
         WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
     }
-
     //WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
     //WriteJump(0x1093B590, test);
 }

@@ -44,6 +44,7 @@ enum NetMode {
     ListenServer,
     Client
 };
+
 struct LvIn {
     std::byte unspecified[0x1000];
 
