@@ -745,7 +745,7 @@ float originalDfv = 0.0;
 float hSfv = 0.0;
 float hDfv = 0.0;
 void WidescreenViewFix() {
-    if (lvIn != NULL && pDevice != NULL) {
+    if (lvIn != NULL && &lvIn->lPlC() != NULL && pDevice != NULL) {
         // Copy/pasted.  TODO: Refactor
         D3DDISPLAYMODE d3dDisplayMode;
         pDevice->GetDisplayMode(&d3dDisplayMode);
