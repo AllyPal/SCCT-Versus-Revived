@@ -24,6 +24,11 @@ public:
 
 struct PlC {
     std::byte unspecified[0x1000];
+    
+    float& Defv() {
+        return *reinterpret_cast<float*>(unspecified + (0x510));
+    }
+
     float& Dfv() {
         return *reinterpret_cast<float*>(unspecified + (0xA44));
     }

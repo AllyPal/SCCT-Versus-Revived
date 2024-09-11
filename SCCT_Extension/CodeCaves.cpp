@@ -738,8 +738,8 @@ double ConvertFOV(double horizontalFOV, double newAspectRatio) {
     return min(newHorizontalFOV, Config::widescreenFovCap);
 }
 
-UINT displayHeight = 0;
-UINT displayWidth = 0;
+float displayHeightLast = 0;
+float displayWidthLast = 0;
 float originalSfv = 0.0;
 float originalDfv = 0.0;
 float hSfv = 0.0;
@@ -749,22 +749,34 @@ void WidescreenViewFix() {
         // Copy/pasted.  TODO: Refactor
         D3DDISPLAYMODE d3dDisplayMode;
         pDevice->GetDisplayMode(&d3dDisplayMode);
-        if (displayWidth != d3dDisplayMode.Width || displayHeight != d3dDisplayMode.Height) {
-            float displayHeight = static_cast<float>(d3dDisplayMode.Height);
-            float displayWidth = static_cast<float>(d3dDisplayMode.Width);
-            displayWidth = min(displayWidth, d3dDisplayMode.Height * (16.0f / 9.0));
+        float defv = lvIn->lPlC().Defv();
+        float displayHeight = static_cast<float>(d3dDisplayMode.Height);
+        float displayWidth = static_cast<float>(d3dDisplayMode.Width);
+        displayWidth = min(displayWidth, d3dDisplayMode.Height * (16.0f / 9.0));
 
+        if (displayWidthLast != displayWidth || displayHeightLast != displayHeight || (defv != hSfv && defv != hDfv)) {
             if (originalSfv == 0.0) {
                 originalSfv = lvIn->lPlC().Sfv();
                 originalDfv = lvIn->lPlC().Dfv();
             }
+
+            bool wasSfv = lvIn->lPlC().Defv() == hSfv;
+            bool wasDfv = lvIn->lPlC().Defv() == hDfv;
+
             auto aspectRatio = displayWidth / displayHeight;
             hSfv = ConvertFOV(originalSfv, aspectRatio);
             hDfv = ConvertFOV(originalDfv, aspectRatio);
 
+            if (wasSfv) {
+                lvIn->lPlC().Defv() = hSfv;
+            }
+            else if (wasDfv) {
+                lvIn->lPlC().Defv() = hDfv;
+            }
+
             // last calculated
-            displayHeight = d3dDisplayMode.Height;
-            displayWidth = d3dDisplayMode.Width;
+            displayHeightLast = displayHeight;
+            displayWidthLast = displayWidth;
         }
 
         lvIn->lPlC().Sfv() = hSfv;
