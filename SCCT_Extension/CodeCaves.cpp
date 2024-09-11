@@ -351,11 +351,11 @@ bool IsWindows10OrGreater() {
 
 bool IsSetProcessMitigationPolicySupported() {
     HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
-    if (hKernel32 != NULL) {
+    if (hKernel32 != NULL && IsWindows10OrGreater()) {
         auto SetProcessMitigationPolicy = GetProcAddress(hKernel32, "SetProcessMitigationPolicy");
         FreeLibrary(hKernel32);
 
-        return SetProcessMitigationPolicy != NULL && IsWindows10OrGreater();
+        return SetProcessMitigationPolicy != NULL;
     }
 
     return false;
@@ -503,6 +503,7 @@ static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
     }
     else {
         // omit 2d.  TODO: Consider scaling and centering
+        std::cout << projMatrix->_22 << std::endl;
     }
 }
 
