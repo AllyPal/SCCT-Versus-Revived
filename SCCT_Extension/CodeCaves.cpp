@@ -355,9 +355,8 @@ bool IsSetProcessMitigationPolicySupported() {
         if (hKernel32 != NULL) {
             auto SetProcessMitigationPolicy = GetProcAddress(hKernel32, "SetProcessMitigationPolicy");
             FreeLibrary(hKernel32);
+            return SetProcessMitigationPolicy != NULL;
         }
-
-        return SetProcessMitigationPolicy != NULL;
     }
 
     return false;
