@@ -331,13 +331,27 @@ void DebugD3D() {
     std::wcout << std::fixed << std::hex << "MaxPixelShaderValue: " << caps.MaxPixelShaderValue << std::endl;
 }
 
+bool IsSetProcessMitigationPolicySupported() {
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+
+    if (hKernel32) {
+        void* pSetProcessMitigationPolicy = (void*)GetProcAddress(hKernel32, "SetProcessMitigationPolicy");
+        return pSetProcessMitigationPolicy != nullptr;
+    }
+
+    return false;
+}
+
 // Enables features which reduce the risks of potential buffer overflow vulernabilities in the base game
 void EnableProcessSecurity()
 {
-    PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy = {};
-    policy.ProhibitDynamicCode = 1;
-    if (SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy, sizeof(policy))) {
-        std::cout << "ACG enabled" << std::endl;
+    if (IsSetProcessMitigationPolicySupported()) {
+        PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy = {};
+        policy.ProhibitDynamicCode = 1;
+        policy.AllowThreadOptOut = false;
+        if (SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy, sizeof(policy))) {
+            std::cout << "ACG enabled" << std::endl;
+        }
     }
 
     if (SetProcessDEPPolicy(PROCESS_DEP_ENABLE)) {
