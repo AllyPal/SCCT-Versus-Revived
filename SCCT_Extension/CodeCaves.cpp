@@ -331,13 +331,31 @@ void DebugD3D() {
     std::wcout << std::fixed << std::hex << "MaxPixelShaderValue: " << caps.MaxPixelShaderValue << std::endl;
 }
 
+bool IsWindows10OrGreater() {
+    OSVERSIONINFOEX osvi = { 0 };
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+    osvi.dwMajorVersion = 10;  // Windows 10 major version
+    osvi.dwMinorVersion = 0;   // Windows 10 minor version
+
+    // Initialize the OSVERSIONINFOEX structure.
+    DWORDLONG dwlConditionMask = 0;
+    VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
+    VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
+
+    return VerifyVersionInfo(
+        &osvi,
+        VER_MAJORVERSION | VER_MINORVERSION,
+        dwlConditionMask
+    );
+}
+
 bool IsSetProcessMitigationPolicySupported() {
     HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
     if (hKernel32 != NULL) {
         auto SetProcessMitigationPolicy = GetProcAddress(hKernel32, "SetProcessMitigationPolicy");
         FreeLibrary(hKernel32);
 
-        return SetProcessMitigationPolicy != NULL;
+        return SetProcessMitigationPolicy != NULL && IsWindows10OrGreater();
     }
 
     return false;
