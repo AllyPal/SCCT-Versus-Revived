@@ -348,7 +348,6 @@ void EnableProcessSecurity()
     if (IsSetProcessMitigationPolicySupported()) {
         PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy = {};
         policy.ProhibitDynamicCode = 1;
-        policy.AllowThreadOptOut = false;
         if (SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy, sizeof(policy))) {
             std::cout << "ACG enabled" << std::endl;
         }
