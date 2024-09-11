@@ -352,8 +352,10 @@ bool IsWindows10OrGreater() {
 bool IsSetProcessMitigationPolicySupported() {
     if (IsWindows10OrGreater()) {
         HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
-        auto SetProcessMitigationPolicy = GetProcAddress(hKernel32, "SetProcessMitigationPolicy");
-        FreeLibrary(hKernel32);
+        if (hKernel32 != NULL) {
+            auto SetProcessMitigationPolicy = GetProcAddress(hKernel32, "SetProcessMitigationPolicy");
+            FreeLibrary(hKernel32);
+        }
 
         return SetProcessMitigationPolicy != NULL;
     }
