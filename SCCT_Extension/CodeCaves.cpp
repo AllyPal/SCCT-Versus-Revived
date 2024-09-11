@@ -345,7 +345,7 @@ bool IsSetProcessMitigationPolicySupported() {
 // Enables features which reduce the risks of potential buffer overflow vulernabilities in the base game
 void EnableProcessSecurity()
 {
-    if (IsSetProcessMitigationPolicySupported()) {
+    if (Config::security_acg && IsSetProcessMitigationPolicySupported()) {
         PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy = {};
         policy.ProhibitDynamicCode = 1;
         if (SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy, sizeof(policy))) {
@@ -353,7 +353,7 @@ void EnableProcessSecurity()
         }
     }
 
-    if (SetProcessDEPPolicy(PROCESS_DEP_ENABLE)) {
+    if (Config::security_dep && SetProcessDEPPolicy(PROCESS_DEP_ENABLE)) {
         std::cout << "DEP enabled" << std::endl;
     }
 }

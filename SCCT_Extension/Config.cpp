@@ -18,6 +18,8 @@ bool Config::useDirectConnect;
 std::wstring Config::directConnectIp;
 std::wstring Config::directConnectPort;
 bool Config::mouseInputFix;
+bool Config::security_acg;
+bool Config::security_dep;
 
 std::vector<std::string> Config::serverList;
 
@@ -34,6 +36,8 @@ void Config::Initialize(std::wstring& configFilePath) {
     directConnectIp = L"";
     directConnectPort = L"";
     mouseInputFix = true;
+    security_acg = true;
+    security_dep = true;
 
     std::ifstream configFile(*configFilePathRef);
 
@@ -51,7 +55,8 @@ void Config::Initialize(std::wstring& configFilePath) {
             widescreenFovCap = jsonConfig.value("widescreenFovCap", 105.0);
             mouseInputFix = jsonConfig.value("mouseInputFix", true);
             serverList = jsonConfig.value("serverList", std::vector<std::string> {});
-
+            security_acg = jsonConfig.value("security_acg", true);
+            security_dep = jsonConfig.value("security_dep", true);
             // Update the file with any new fields
             Serialize();
         }
@@ -128,6 +133,10 @@ void Config::Serialize() {
             jsonConfig["widescreenFovCap"] = widescreenFovCap;
 
             jsonConfig["serverList"] = serverList;
+
+            jsonConfig["security_acg"] = security_acg;
+
+            jsonConfig["security_dep"] = security_dep;
 
             configFile << jsonConfig.dump(4);
         }
