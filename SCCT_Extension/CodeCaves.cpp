@@ -334,10 +334,9 @@ void DebugD3D() {
 bool IsWindows10OrGreater() {
     OSVERSIONINFOEX osvi = { 0 };
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 10;  // Windows 10 major version
-    osvi.dwMinorVersion = 0;   // Windows 10 minor version
+    osvi.dwMajorVersion = 10;
+    osvi.dwMinorVersion = 0;
 
-    // Initialize the OSVERSIONINFOEX structure.
     DWORDLONG dwlConditionMask = 0;
     VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
     VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
@@ -452,15 +451,20 @@ static void ApplyMatrixPerspectiveFovLH(D3DMATRIX* projMatrix, float displayWidt
     D3DXMatrixPerspectiveFovLH(projMatrix, fovY, aspectRatio, nearClip, farClip);
 }
 
-void ApplyWidthScaling(D3DMATRIX* projMatrix, float displayHeight, float displayWidth)
+void ApplyWidthScaling(D3DMATRIX* projMatrix, float aspectRatio)
 {
     if ((projMatrix->_11 < 0.0f) ^ (projMatrix->_22 < 0.0f)) {
-        projMatrix->_22 = (projMatrix->_11 / displayHeight) * displayWidth;
+        projMatrix->_22 = projMatrix->_11 * aspectRatio;
         projMatrix->_22 *= -1;
     }
     else {
-        projMatrix->_22 = (projMatrix->_11 / displayHeight) * displayWidth;
+        projMatrix->_22 = projMatrix->_11 * aspectRatio;
     }
+}
+
+void ApplyWidthScaling(D3DMATRIX* projMatrix, float displayHeight, float displayWidth)
+{
+    ApplyWidthScaling(projMatrix, displayWidth / displayHeight);
 }
 
 void ApplyHeightScaling(D3DMATRIX* projMatrix, D3DDISPLAYMODE& d3dDisplayMode)
@@ -474,6 +478,45 @@ void ApplyHeightScaling(D3DMATRIX* projMatrix, D3DDISPLAYMODE& d3dDisplayMode)
     }
 }
 
+static bool isMercEnhancedRealityStationary = 0;
+
+static int MercEnhancedRealityStationaryEntry = 0x10AF8069;
+__declspec(naked) void MercEnhancedRealityStationary() {
+    static int Return = 0x10AF8072;
+    static int MercErStationary = 0x10AF8C00;
+    isMercEnhancedRealityStationary = true;
+    __asm {
+        push    0
+        push ebx
+        push esi
+        call dword ptr[MercErStationary]
+
+    }
+    isMercEnhancedRealityStationary = false;
+    __asm {
+        jmp dword ptr[Return]
+    }
+}
+static bool isSpyEnhancedRealityStationary = 0;
+static int SpyEnhancedRealityStationaryEntry = 0x10A90ED2;
+__declspec(naked) void SpyEnhancedRealityStationary() {
+    static int Return = 0x10A90EDB;
+    static int MercErStationary = 0x10AF8C00;
+    isSpyEnhancedRealityStationary = true;
+    __asm {
+        push    1
+        push esi
+        push ebx
+        call dword ptr[MercErStationary]
+
+    }
+    isSpyEnhancedRealityStationary = false;
+    __asm {
+        jmp dword ptr[Return]
+    }
+}
+
+
 static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
 {
     D3DDISPLAYMODE d3dDisplayMode;
@@ -485,9 +528,21 @@ static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
     //float displayAspectRatio = displayHeight/ displayWidth;
     auto renderAspectRatio = fabs(roundf((projMatrix->_11 / projMatrix->_22) * 100.0f) / 100.0f);
     const float fourByThreeAspect = 0.75f;
-    if (renderAspectRatio == fourByThreeAspect && fabs(projMatrix->_22) > 0.1f) {
+    if (renderAspectRatio == fourByThreeAspect) {
         /*std::string message = std::format("deg:  {:.2f}", RadToDeg(originalFov);
         std::cout << message << std::endl;*/
+        if (fabs(projMatrix->_22) < 0.1f) {
+            if (!isMercEnhancedRealityStationary && !isSpyEnhancedRealityStationary) {
+                return;
+            }
+
+            auto newAspect = (displayWidth / displayHeight);
+            ApplyWidthScaling(projMatrix, newAspect);
+                
+            projMatrix->_42 = (projMatrix->_42 / (4.0 / 3)) * newAspect;
+            return;
+        }
+
         int scalingMode = 0;
         
         switch (scalingMode) {
@@ -502,12 +557,7 @@ static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
             break;
         }
     }
-    else {
-        // omit 2d.  TODO: Consider scaling and centering
-        std::cout << projMatrix->_22 << std::endl;
-    }
 }
-
 int SetProjection1Entry = 0x1096CA07;
 __declspec(naked) void SetProjection1() {
     static D3DMATRIX* projMatrix;
@@ -517,7 +567,7 @@ __declspec(naked) void SetProjection1() {
         mov     dword ptr[projMatrix], ebp
     }
     SetupProjectionMatrix(projMatrix);
-
+   
     __asm {
         popad
         call    dword ptr[ecx + 0x94]
@@ -1099,12 +1149,8 @@ void CodeCaves::Initialize()
     if (Config::applyAnimationFix)
         WriteJump(animatedTextureFixEntry, animatedTextureFix);
 
-    switch (Config::frameTimingMode) {
-    default:
-        WriteJump(startFrameTimerEntry, beforePresent);
-        WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
-        break;
-    }
+    WriteJump(startFrameTimerEntry, beforePresent);
+    WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
     if (Config::frameRateLimit_client_unlock)
         WriteJump(removeClientFpsCapEntry, removeClientFpsCap);
 
@@ -1121,6 +1167,8 @@ void CodeCaves::Initialize()
 
         WriteJump(viewFixEntry, viewFix);
         WriteJump(viewFix2Entry, viewFix);
+        WriteJump(MercEnhancedRealityStationaryEntry, MercEnhancedRealityStationary);
+        WriteJump(SpyEnhancedRealityStationaryEntry, SpyEnhancedRealityStationary);
     }
 
     WriteJump(DPPEntry, DPP);
