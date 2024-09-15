@@ -1042,6 +1042,26 @@ void printTest() {
     logger_->log("");
 }
 
+static int ScctEnhancedIdentifier = 0x10C42DA4;
+static int AddEnhancedGuiResolutionsEntry = 0x10B0FC5E;
+__declspec(naked) void AddEnhancedGuiResolutions() {
+    static int Return = 0x10B0FC64;
+    __asm {
+        push eax
+        mov eax, dword ptr[ScctEnhancedIdentifier]
+        mov al, byte ptr [eax]
+        cmp al, '3'
+        jne notEnhanced
+
+        pop eax
+        push 13 // resolution count
+
+        notEnhanced:
+        push 0x10C42C74
+        jmp dword ptr[Return]
+    }
+}
+
 int imp_wcslen = 0x10BDF3B4;
 int imp_wcscpy = 0x10BDF39C;
 
@@ -1173,6 +1193,7 @@ void CodeCaves::Initialize()
 
     WriteJump(DPPEntry, DPP);
     WriteJump(SetLvInEntry, SetLvIn);
+    WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);
 
     if (Config::mouseInputFix) {
         WriteJump(DisableMouseInputEntry, DisableMouseInput);
