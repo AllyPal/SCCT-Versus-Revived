@@ -853,6 +853,8 @@ double ConvertFOV(double horizontalFOV, double newAspectRatio) {
     return min(newHorizontalFOV, Config::widescreenFovCap);
 }
 
+float aspectRatioMenuVertMouseInputMultiplier = 1.0;
+
 float displayHeightLast = 0;
 float displayWidthLast = 0;
 float originalSfv = 0.0;
@@ -879,6 +881,7 @@ void WidescreenViewFix() {
             bool wasDfv = lvIn->lPlC().Defv() == hDfv;
 
             auto aspectRatio = displayWidth / displayHeight;
+            aspectRatioMenuVertMouseInputMultiplier = aspectRatio/(4.0 / 3.0);
             hSfv = ConvertFOV(originalSfv, aspectRatio);
             hDfv = ConvertFOV(originalDfv, aspectRatio);
 
@@ -1175,6 +1178,46 @@ __declspec(naked) void test() {
     }
 }
 
+static int RoundFpuFunction = 0x10B83AA0;
+int MenuMouseSensitivityYEntry = 0x10A56B31;
+__declspec(naked) void MenuMouseSensitivityY() {
+    static int Return = 0x10A56B44;
+    static float yRemainder = 0.0;
+    __asm {
+        fmul dword ptr[aspectRatioMenuVertMouseInputMultiplier]
+        fmul dword ptr[Config::menuSensitivity]
+        fsubp st(1), st(0)
+        fadd dword ptr[yRemainder]
+        fst dword ptr[yRemainder]
+        call dword ptr[RoundFpuFunction]
+        mov[esi + 0x00000CD0], eax
+        fld dword ptr[yRemainder]
+        fisub dword ptr[esi + 0x00000CD0]
+        fstp dword ptr[yRemainder]
+
+        jmp dword ptr[Return]
+    }
+}
+
+int MenuMouseSensitivityXEntry = 0x10A56A81;
+__declspec(naked) void MenuMouseSensitivityX() {
+    static int Return = 0x10A56A98;
+    static float xRemainder = 0.0;
+    __asm {
+        fmul dword ptr[Config::menuSensitivity]
+        fiadd[esi + 0x00000CCC]
+        fadd dword ptr[xRemainder]
+        fst dword ptr[xRemainder]
+        call dword ptr[RoundFpuFunction]
+        mov[esi + 0x00000CCC], eax
+        fld dword ptr[xRemainder]
+        fisub dword ptr[esi + 0x00000CCC]
+        fstp dword ptr[xRemainder]
+
+        jmp dword ptr[Return]
+    }
+}
+
 bool __cdecl WriteBytes(uintptr_t targetAddress, const uint8_t* bytes, size_t length) {
     logger_->log("Writing bytes at " + toHexString(targetAddress));
 
@@ -1262,6 +1305,8 @@ void CodeCaves::Initialize()
         WriteJump(FixMouseInputEntry, FixMouseInput);
         WriteJump(X_WriteMouseInputEntry, X_WriteMouseInput);
         WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
+        WriteJump(MenuMouseSensitivityYEntry, MenuMouseSensitivityY);
+        WriteJump(MenuMouseSensitivityXEntry, MenuMouseSensitivityX);
     }
 
     if (Config::disableStickyCamContextMenu) {
