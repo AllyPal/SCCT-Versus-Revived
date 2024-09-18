@@ -492,11 +492,13 @@ __declspec(naked) void MercEnhancedRealityStationary() {
         call dword ptr[MercErStationary]
 
     }
+
     isMercEnhancedRealityStationary = false;
     __asm {
         jmp dword ptr[Return]
     }
 }
+
 static bool isSpyEnhancedRealityStationary = 0;
 static int SpyEnhancedRealityStationaryEntry = 0x10A90ED2;
 __declspec(naked) void SpyEnhancedRealityStationary() {
@@ -917,8 +919,6 @@ __declspec(naked) void alternativeFrameMode() {
         pushad
     }
     LimitFrameRate();
-
-    UpdateLastFrameRenderedTime();
     __asm {
         popad
         retn    0x10
@@ -1026,6 +1026,38 @@ __declspec(naked) void animatedTextureFix() {
         pop     esi
         add     esp, 0x08
         ret     0004
+    }
+}
+
+//static int StickyCamContextMenuBlock1Entry = 0x10B2D2D3;
+//__declspec(naked) void StickyCamContextMenuBlock1() {
+//    static int Return = 0x10B2D2D9;
+//    __asm {
+//        xor edx, edx
+//        mov[ebx + 0x37C], edx
+//        jmp dword ptr[Return]
+//    }
+//}
+//
+//static int StickyCamContextMenuBlock2Entry = 0x10B2D263;
+//__declspec(naked) void StickyCamContextMenuBlock2() {
+//    static int Return = 0x10B2D269;
+//    __asm {
+//        mov[ebx + 0x37C], 0
+//        cmp esi, [ebx + 0x37C]
+//        jmp dword ptr[Return]
+//    }
+//}
+
+static int StickyCamContextMenuBlock3Entry = 0x10B2D1C0;
+__declspec(naked) void StickyCamContextMenuBlock3() {
+    __asm {
+        mov eax, ecx
+        mov eax, [eax + 0xB4]
+        mov eax, [eax + 0x774]
+        mov eax, [eax + 0xA90]
+        mov [eax+0x37C], 0
+        ret
     }
 }
 
@@ -1143,6 +1175,26 @@ __declspec(naked) void test() {
     }
 }
 
+bool __cdecl WriteBytes(uintptr_t targetAddress, const uint8_t* bytes, size_t length) {
+    logger_->log("Writing bytes at " + toHexString(targetAddress));
+
+    DWORD oldProtect;
+    if (!VirtualProtect(reinterpret_cast<LPVOID>(targetAddress), length, PAGE_READWRITE, &oldProtect)) {
+        logger_->log("Failed to change memory protection");
+        return false;
+    }
+
+    memcpy(reinterpret_cast<void*>(targetAddress), bytes, length);
+    if (!VirtualProtect(reinterpret_cast<LPVOID>(targetAddress), length, oldProtect, &oldProtect)) {
+        logger_->log("Failed to restore memory protection");
+        return false;
+    }
+
+    FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<LPCVOID>(targetAddress), length);
+    logger_->log("Finished writing bytes at " + toHexString(targetAddress));
+    return true;
+}
+
 bool __cdecl WriteJump(uintptr_t targetAddress, void(*function)()) {
     logger_->log("Writing jump at " + toHexString(targetAddress));
     uintptr_t functionAddress = reinterpret_cast<uintptr_t>(function);
@@ -1210,6 +1262,15 @@ void CodeCaves::Initialize()
         WriteJump(FixMouseInputEntry, FixMouseInput);
         WriteJump(X_WriteMouseInputEntry, X_WriteMouseInput);
         WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
+    }
+
+    if (Config::disableStickyCamContextMenu) {
+        /*WriteJump(StickyCamContextMenuBlock1Entry, StickyCamContextMenuBlock1);
+        WriteJump(StickyCamContextMenuBlock2Entry, StickyCamContextMenuBlock2);*/
+        WriteJump(StickyCamContextMenuBlock3Entry, StickyCamContextMenuBlock3);
+        
+        uint8_t shortJump[] = { 0xEB };
+        WriteBytes(0x10B2CE1B, shortJump, sizeof(shortJump));
     }
     //WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
     //WriteJump(0x1093B590, test);

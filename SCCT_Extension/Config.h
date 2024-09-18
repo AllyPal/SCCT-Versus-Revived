@@ -16,6 +16,8 @@ public:
     static bool security_acg;
     static bool security_dep;
 
+    static bool disableStickyCamContextMenu;
+
     static bool useDirectConnect;
     static std::wstring directConnectIp;
     static std::wstring directConnectPort;

@@ -20,6 +20,7 @@ std::wstring Config::directConnectPort;
 bool Config::mouseInputFix;
 bool Config::security_acg;
 bool Config::security_dep;
+bool Config::disableStickyCamContextMenu;
 
 std::vector<std::string> Config::serverList;
 
@@ -38,6 +39,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     mouseInputFix = true;
     security_acg = true;
     security_dep = true;
+    disableStickyCamContextMenu = true;
 
     std::ifstream configFile(*configFilePathRef);
 
@@ -57,6 +59,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             serverList = jsonConfig.value("serverList", std::vector<std::string> {});
             security_acg = jsonConfig.value("security_acg", true);
             security_dep = jsonConfig.value("security_dep", true);
+            disableStickyCamContextMenu = jsonConfig.value("disableStickyCamContextMenu", true);
             // Update the file with any new fields
             Serialize();
         }
@@ -137,6 +140,8 @@ void Config::Serialize() {
             jsonConfig["security_acg"] = security_acg;
 
             jsonConfig["security_dep"] = security_dep;
+
+            jsonConfig["disableStickyCamContextMenu"] = disableStickyCamContextMenu;
 
             configFile << jsonConfig.dump(4);
         }
