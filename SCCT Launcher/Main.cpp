@@ -50,10 +50,8 @@ static std::wstring FindScctVersusExecutable() {
         return result;
     }
 
-    result = FindExecutable(L"\\system\\" + dllName);
-    if (!result.empty()) {
-        return result;
-    }
+    return FindExecutable(L"\\system\\" + dllName);
+
 }
 
 std::wstring getCurrentDateTime() {
