@@ -516,6 +516,15 @@ __declspec(naked) void SpyEnhancedRealityStationary() {
     }
 }
 
+static int FixMovingEnhancedRealityScalingEntry = 0x10AF8CD0;
+__declspec(naked) void FixMovingEnhancedRealityScaling() {
+    static int Return = 0x10AF8CDA;
+    __asm {
+        mov[esp + 0x64], 1//eax
+        mov eax, [edi + 0x000001A0]
+        jmp dword ptr[Return]
+    }
+}
 
 static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
 {
@@ -1189,6 +1198,7 @@ void CodeCaves::Initialize()
         WriteJump(viewFix2Entry, viewFix);
         WriteJump(MercEnhancedRealityStationaryEntry, MercEnhancedRealityStationary);
         WriteJump(SpyEnhancedRealityStationaryEntry, SpyEnhancedRealityStationary);
+        WriteJump(FixMovingEnhancedRealityScalingEntry, FixMovingEnhancedRealityScaling);
     }
 
     WriteJump(DPPEntry, DPP);
