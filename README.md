@@ -1,4 +1,4 @@
-# SCCT-Versus-Revived
+# SCCT Versus Revived
 
 Enhancements and fixes for Splinter Cell Chaos Theory (SCCT) Versus.
 
