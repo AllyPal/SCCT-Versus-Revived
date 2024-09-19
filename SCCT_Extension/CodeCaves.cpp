@@ -112,6 +112,10 @@ __declspec(naked) void DisableMouseInput() {
     }
 }
 
+float aspectRatioMenuVertMouseInputMultiplier = 1.0;
+static float menuPositionX = 240.0f;
+static float menuPositionY = 320.0f;
+
 void HandleMouseInput(LPDIRECTINPUTDEVICE8 device, int dd) {
     DIMOUSESTATE2 mouseState;
     HRESULT hr = device->GetDeviceState(sizeof(DIMOUSESTATE2), &mouseState);
@@ -137,6 +141,12 @@ void HandleMouseInput(LPDIRECTINPUTDEVICE8 device, int dd) {
     }
     xMouseDelta = mouseState.lX;
     yMouseDelta = mouseState.lY;
+
+    menuPositionY += yMouseDelta * Config::menuSensitivity * aspectRatioMenuVertMouseInputMultiplier;
+    menuPositionY = std::clamp(menuPositionY, 0.0f, 480.0f);
+
+    menuPositionX += xMouseDelta * Config::menuSensitivity;
+    menuPositionX = std::clamp(menuPositionX, 0.0f, 640.0f);
 }
 
 
@@ -1178,12 +1188,15 @@ __declspec(naked) void test() {
     }
 }
 
-static int RoundFpuFunction = 0x10B83AA0;
-int MenuMouseSensitivityYEntry = 0x10A56B31;
+//static int RoundFpuFunction = 0x10B83AA0;
+int MenuMouseSensitivityYEntry = 0x10A56B2D;
 __declspec(naked) void MenuMouseSensitivityY() {
     static int Return = 0x10A56B44;
-    static float yRemainder = 0.0;
+    //static float yRemainder = 0.0;
     __asm {
+        /*fild dword ptr[yMouseDelta]
+        fchs
+
         fmul dword ptr[aspectRatioMenuVertMouseInputMultiplier]
         fmul dword ptr[Config::menuSensitivity]
         fsubp st(1), st(0)
@@ -1193,18 +1206,24 @@ __declspec(naked) void MenuMouseSensitivityY() {
         mov[esi + 0x00000CD0], eax
         fld dword ptr[yRemainder]
         fisub dword ptr[esi + 0x00000CD0]
-        fstp dword ptr[yRemainder]
+        fstp dword ptr[yRemainder]*/
+        fld dword ptr[menuPositionY]
+        fistp dword ptr[esi + 0x00000CD0]
 
         jmp dword ptr[Return]
     }
 }
 
-int MenuMouseSensitivityXEntry = 0x10A56A81;
+int MenuMouseSensitivityXEntry = 0x10A56A76;
 __declspec(naked) void MenuMouseSensitivityX() {
     static int Return = 0x10A56A98;
-    static float xRemainder = 0.0;
+    //static float xRemainder = 0.0;
     __asm {
-        fmul dword ptr[Config::menuSensitivity]
+        fild dword ptr[xMouseDelta]
+        add esp,0x4
+        fst     dword ptr[esp + 0x1C]
+
+       /* fmul dword ptr[Config::menuSensitivity]
         fiadd[esi + 0x00000CCC]
         fadd dword ptr[xRemainder]
         fst dword ptr[xRemainder]
@@ -1212,7 +1231,9 @@ __declspec(naked) void MenuMouseSensitivityX() {
         mov[esi + 0x00000CCC], eax
         fld dword ptr[xRemainder]
         fisub dword ptr[esi + 0x00000CCC]
-        fstp dword ptr[xRemainder]
+        fstp dword ptr[xRemainder]*/
+        fld dword ptr[menuPositionX]
+        fistp dword ptr[esi + 0x00000CCC]
 
         jmp dword ptr[Return]
     }
