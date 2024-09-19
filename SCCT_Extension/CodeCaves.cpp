@@ -863,8 +863,6 @@ double ConvertFOV(double horizontalFOV, double newAspectRatio) {
     return min(newHorizontalFOV, Config::widescreenFovCap);
 }
 
-float aspectRatioMenuVertMouseInputMultiplier = 1.0;
-
 float displayHeightLast = 0;
 float displayWidthLast = 0;
 float originalSfv = 0.0;
