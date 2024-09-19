@@ -47,7 +47,7 @@ static std::wstring FindScctVersusExecutable() {
 
     // Default file name
     std::wstring execuatableName = L"scct_versus.exe";
-    FindExecutable(execuatableName);
+    result = FindExecutable(execuatableName);
     if (!result.empty()) {
         return result;
     }
