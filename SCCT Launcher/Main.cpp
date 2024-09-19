@@ -34,7 +34,7 @@ static std::wstring FindExecutable(const std::wstring& exeName) {
 
 static std::wstring FindScctVersusExecutable() {
     // Enhanced file name
-    std::wstring dllName = L"scct_versus.dll";
+    std::wstring dllName = L"scct versus";
     auto result = FindExecutable(dllName);
     if (!result.empty()) {
         return result;
