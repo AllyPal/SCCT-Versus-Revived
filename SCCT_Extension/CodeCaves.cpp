@@ -821,6 +821,7 @@ float GetPerformance() {
 }
 
 std::chrono::steady_clock::time_point nextFrameTime;
+std::chrono::steady_clock::time_point lastFrameTime;
 void UpdateLastFrameRenderedTime() {
     double frameRateLimit;
     if (IsListenServer()) {
@@ -834,6 +835,7 @@ void UpdateLastFrameRenderedTime() {
         std::chrono::duration<double>((double)1.0 / frameRateLimit)
     ).count();
 
+    lastFrameTime = nextFrameTime;
     nextFrameTime = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(frameTimeNanoseconds);
 }
 
@@ -1028,6 +1030,166 @@ __declspec(naked) void beforePresent() {
 //    }
 //}
 
+bool ValidateState(int newState) {
+    bool result = true;
+    __asm {
+        mov eax, newState
+        mov ecx, 0xF4522FF2
+        xor ecx, -1
+        mov ebx, 0
+        mov eax, 0x1B3D94FC
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B39F643
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B39F653
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B39FCA0
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B39E4EB
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B39982A
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B398314
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B0D7F82
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B0C6D75
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B0F27D3
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B0429E8
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B042A7C
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B07D0E5
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B07D119
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B07D444
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B07C282
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B064916
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B061F52
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B060F84
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B002FE5
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B02B02B
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B1FA6AA
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B1FAF1E
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B1F1F73
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B1ED0C1
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B1EC606
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B1EC74B
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B179997
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B103B89
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        cmp ebx, 0xCD41922F
+        je skip
+        mov byte ptr[result], 0
+        skip:
+    }
+    return result;
+}
+
 int animatedTextureFixEntry = 0x109F2561;
 __declspec(naked) void animatedTextureFix() {
     __asm {
@@ -1060,6 +1222,44 @@ __declspec(naked) void animatedTextureFix() {
         pop     esi
         add     esp, 0x08
         ret     0004
+    }
+}
+
+int OnStateChangeEntry = 0x109F1FC3;
+__declspec(naked) void OnStateChange() {
+    static int Deny = 0x109F1FD0;
+    static int Return = 0x109F1FCB;
+    static int currentState;
+    static int newState;
+    static int all;
+    __asm {
+        pushad
+        mov dword ptr[currentState], esi
+        mov dword ptr[newState], eax
+    }
+    
+    if (!ValidateState(newState)) {
+        __asm {
+            mov     eax, 0x13BFF3
+            mov[esp + 0x2c], eax
+            popad
+            mov     edx, [edi]
+            mov     eax, 0x13BFF3
+            push    eax
+            mov     ecx, edi
+            call    dword ptr[edx + 0x30]
+            jmp     dword ptr[Return]
+        }
+    }
+    else {
+        __asm {
+            popad
+            mov     edx, [edi]
+            push    eax
+            mov     ecx, edi
+            call    dword ptr[edx + 0x30]
+            jmp     dword ptr[Return]
+        }
     }
 }
 
@@ -1341,6 +1541,7 @@ void CodeCaves::Initialize()
     WriteJump(DPPEntry, DPP);
     WriteJump(SetLvInEntry, SetLvIn);
     WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);
+    WriteJump(OnStateChangeEntry, OnStateChange);
 
     if (Config::mouseInputFix) {
         WriteJump(DisableMouseInputEntry, DisableMouseInput);
