@@ -23,6 +23,7 @@ public:
     static std::wstring directConnectPort;
 
     static bool mouseInputFix;
+    static float baseMouseSensitivity;
     static float menuSensitivity;
 
     // Constructor to initialize the config from a wide string path

@@ -19,6 +19,7 @@ std::wstring Config::directConnectIp;
 std::wstring Config::directConnectPort;
 bool Config::mouseInputFix;
 float Config::menuSensitivity;
+float Config::baseMouseSensitivity;
 bool Config::security_acg;
 bool Config::security_dep;
 bool Config::disableStickyCamContextMenu;
@@ -39,6 +40,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     directConnectPort = L"";
     mouseInputFix = true;
     menuSensitivity = 0.25;
+    baseMouseSensitivity = 1.0;
     security_acg = true;
     security_dep = true;
     disableStickyCamContextMenu = true;
@@ -59,6 +61,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             widescreenFovCap = jsonConfig.value("widescreenFovCap", 105.0);
             mouseInputFix = jsonConfig.value("mouseInputFix", true);
             menuSensitivity = jsonConfig.value("menuSensitivity", 0.25);
+            baseMouseSensitivity = jsonConfig.value("baseMouseSensitivity", 1.0);
             serverList = jsonConfig.value("serverList", std::vector<std::string> {});
             security_acg = jsonConfig.value("security_acg", true);
             security_dep = jsonConfig.value("security_dep", true);
@@ -135,6 +138,8 @@ void Config::Serialize() {
             jsonConfig["mouseInputFix"] = mouseInputFix;
 
             jsonConfig["menuSensitivity"] = menuSensitivity;
+
+            jsonConfig["baseMouseSensitivity"] = baseMouseSensitivity;
 
             jsonConfig["widescreenAspectRatioFix"] = widescreenAspectRatioFix;
 

@@ -200,6 +200,29 @@ __declspec(naked) void Y_WriteMouseInput() {
     }
 }
 
+const float ten = 10;
+int BaseMouseSensitivityEntry = 0x109FC177;
+__declspec(naked) void BaseMouseSensitivity() {
+    __asm {
+        fmul dword ptr[Config::baseMouseSensitivity]
+        fdiv dword ptr[ten]
+        fstp dword ptr[edx + edi]
+        pop edi
+        pop esi
+        ret 0004
+    }
+}
+
+const float ScaledSpeed = 1.0;
+int NegativeAccelerationEntry = 0x109FDA59;
+__declspec(naked) void NegativeAcceleration() {
+    static int Return = 0x109FDA5E;
+    __asm {
+        push    edx
+        mov edx, dword ptr[ScaledSpeed]
+        jmp dword ptr[Return]
+    }
+}
 
 int ServerInfoBroadcastEntry = 0x10AB3E35;
 __declspec(naked) void ServerInfoBroadcast() {
@@ -1326,6 +1349,8 @@ void CodeCaves::Initialize()
         WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
         WriteJump(MenuMouseSensitivityYEntry, MenuMouseSensitivityY);
         WriteJump(MenuMouseSensitivityXEntry, MenuMouseSensitivityX);
+        WriteJump(BaseMouseSensitivityEntry, BaseMouseSensitivity);
+        WriteJump(NegativeAccelerationEntry, NegativeAcceleration);
     }
 
     if (Config::disableStickyCamContextMenu) {
