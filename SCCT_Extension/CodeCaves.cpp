@@ -1182,7 +1182,52 @@ bool ValidateState(int newState) {
         mov eax, [eax]
         add ebx, eax
         ror ebx, 1
-        cmp ebx, 0xCD41922F
+        mov eax, 0x1B39E89B
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B3999E2
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B3984E4
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B3A45FB
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B3A4603
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B0C9F1B
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B07D0FF
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B07D520
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        mov eax, 0x1B07CE18
+        xor eax, ecx
+        mov eax, [eax]
+        add ebx, eax
+        ror ebx, 1
+        cmp ebx, 0x167c46f3
         je skip
         mov byte ptr[result], 0
         skip:
