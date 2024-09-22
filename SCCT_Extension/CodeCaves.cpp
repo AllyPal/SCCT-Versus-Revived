@@ -669,65 +669,6 @@ __declspec(naked) void endHudMenuRender() {
 
 static bool isMercEnhancedRealityStationary = 0;
 
-static int MercEnhancedRealityStationaryEntry = 0x10AF8069;
-__declspec(naked) void MercEnhancedRealityStationary() {
-    static int Return = 0x10AF8072;
-    static int MercErStationary = 0x10AF8C00;
-    isMercEnhancedRealityStationary = true;
-    __asm {
-        push    0
-        push ebx
-        push esi
-        call dword ptr[MercErStationary]
-    }
-
-//static int MercEnhancedRealityStationaryEntry = 0x10AF8069;
-//__declspec(naked) void MercEnhancedRealityStationary() {
-//    static int Return = 0x10AF8072;
-//    static int MercErStationary = 0x10AF8C00;
-//    isMercEnhancedRealityStationary = true;
-//    __asm {
-//        push    0
-//        push ebx
-//        push esi
-//        call dword ptr[MercErStationary]
-//    }
-//
-//    isMercEnhancedRealityStationary = false;
-//    __asm {
-//        jmp dword ptr[Return]
-//    }
-//}
-
-static bool isSpyEnhancedRealityStationary = 0;
-static int SpyEnhancedRealityStationaryEntry = 0x10A90ED2;
-__declspec(naked) void SpyEnhancedRealityStationary() {
-    static int Return = 0x10A90EDB;
-    static int MercErStationary = 0x10AF8C00;
-    isSpyEnhancedRealityStationary = true;
-    __asm {
-        push    1
-        push esi
-        push ebx
-        call dword ptr[MercErStationary]
-
-    }
-    isSpyEnhancedRealityStationary = false;
-    __asm {
-        jmp dword ptr[Return]
-    }
-}
-
-static int FixMovingEnhancedRealityScalingEntry = 0x10AF8CD0;
-__declspec(naked) void FixMovingEnhancedRealityScaling() {
-    static int Return = 0x10AF8CDA;
-    __asm {
-        mov[esp + 0x64], 1//eax
-        mov eax, [edi + 0x000001A0]
-        jmp dword ptr[Return]
-    }
-}
-
 static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
 {
     D3DDISPLAYMODE d3dDisplayMode;
@@ -743,7 +684,7 @@ static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
         /*std::string message = std::format("deg:  {:.2f}", RadToDeg(originalFov);
         std::cout << message << std::endl;*/
         if (fabs(projMatrix->_22) < 0.1f) {
-            if (!isMercEnhancedRealityStationary && !isSpyEnhancedRealityStationary) {
+            if (renderingHudMenu) {
                 return;
             }
 
