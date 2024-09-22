@@ -28,6 +28,6 @@ public:
     // Constructor to initialize the config from a wide string path
     static void Initialize(std::wstring& configFilePath);
     static void ProcessCommandLine();
-    static void Serialize();
+    static bool Serialize();
 };
 

@@ -63,6 +63,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             security_acg = jsonConfig.value("security_acg", false);
             security_dep = jsonConfig.value("security_dep", true);
             disableStickyCamContextMenu = jsonConfig.value("disableStickyCamContextMenu", true);
+            configFile.close();
             // Update the file with any new fields
             Serialize();
         }
@@ -115,40 +116,30 @@ void Config::ProcessCommandLine()
     std::wcout << L"mouseInputFix: " << mouseInputFix << std::endl;
 }
 
-void Config::Serialize() {
+bool Config::Serialize() {
     std::ofstream configFile(*configFilePathRef);
 
-    if (configFile) {
+    if (configFile.is_open()) {
         try {
             nlohmann::json jsonConfig;
 
             jsonConfig["frameRateLimit_client"] = frameRateLimit_client;
-
             jsonConfig["frameRateLimit_hosting"] = frameRateLimit_hosting;
-
             jsonConfig["frameTimingMode"] = frameTimingMode;
-
             jsonConfig["applyAnimationFix"] = applyAnimationFix;
-
             jsonConfig["mouseInputFix"] = mouseInputFix;
-
             jsonConfig["menuSensitivity"] = menuSensitivity;
-
             jsonConfig["baseMouseSensitivity"] = baseMouseSensitivity;
-
             jsonConfig["widescreenAspectRatioFix"] = widescreenAspectRatioFix;
-
             jsonConfig["widescreenFovCap"] = widescreenFovCap;
-
             jsonConfig["serverList"] = serverList;
-
             jsonConfig["security_acg"] = security_acg;
-
             jsonConfig["security_dep"] = security_dep;
-
             jsonConfig["disableStickyCamContextMenu"] = disableStickyCamContextMenu;
 
             configFile << jsonConfig.dump(4);
+            configFile.close();
+            return true;
         }
         catch (const std::exception& e) {
             std::cerr << "Error writing config file: " << e.what() << std::endl;
@@ -157,4 +148,5 @@ void Config::Serialize() {
     else {
         std::cerr << "Could not open config file for writing. Check path and permissions." << std::endl;
     }
+    return false;
 }
