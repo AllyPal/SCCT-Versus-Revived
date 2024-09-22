@@ -27,6 +27,7 @@ const int sleep = 0x10BDF108;
 Logger* logger_;
 
 void PrintConsoleHelp();
+bool __cdecl WriteBytes(uintptr_t targetAddress, const uint8_t* bytes, size_t length);
 
 static int thisConsole = 0;
 int setThisConsoleEntry = 0x10B0F15E;
@@ -117,6 +118,14 @@ std::unordered_map<std::wstring, CommandHandler> getCommandHandlers() {
         L"Exits the game",
         [](const std::wstring& arg) {
         exit(0);
+        }
+    };
+
+    commandHandlers[L"test1"] = {
+        L"test1",
+        [](const std::wstring& arg) {
+            uint8_t nops[] = { 0x90, 0x90 };
+            WriteBytes(0x10AA0535, nops, sizeof(nops));
         }
     };
 
