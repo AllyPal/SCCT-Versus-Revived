@@ -364,21 +364,19 @@ void DebugD3D() {
     std::wcout << std::fixed << std::hex << "MaxPixelShaderValue: " << caps.MaxPixelShaderValue << std::endl;
 }
 
+extern "C" LONG RtlGetVersion(OSVERSIONINFOEXW*);
+
 bool IsWindows10OrGreater() {
-    OSVERSIONINFOEX osvi = { 0 };
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 10;
-    osvi.dwMinorVersion = 0;
 
-    DWORDLONG dwlConditionMask = 0;
-    VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
+    OSVERSIONINFOEXW osInfo = { 0 };
+    osInfo.dwOSVersionInfoSize = sizeof(osInfo);
 
-    return VerifyVersionInfo(
-        &osvi,
-        VER_MAJORVERSION | VER_MINORVERSION,
-        dwlConditionMask
-    );
+    // Call RtlGetVersion to get the OS version
+    if (RtlGetVersion(&osInfo) == 0) {
+        return osInfo.dwMajorVersion >= 10;
+    }
+    
+    return false;
 }
 
 bool IsSetProcessMitigationPolicySupported() {
