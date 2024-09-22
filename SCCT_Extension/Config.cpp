@@ -7,7 +7,6 @@
 
 static std::wstring* configFilePathRef;
 int Config::frameRateLimit_client;
-bool Config::frameRateLimit_client_unlock;
 int Config::frameRateLimit_hosting;
 int Config::frameTimingMode;
 bool Config::applyAnimationFix;
@@ -29,7 +28,6 @@ std::vector<std::string> Config::serverList;
 void Config::Initialize(std::wstring& configFilePath) {
     configFilePathRef = &configFilePath;
     frameRateLimit_client = 60;
-    frameRateLimit_client_unlock = false;
     frameRateLimit_hosting = 60;
     frameTimingMode = 1;
     applyAnimationFix = true;
@@ -41,7 +39,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     mouseInputFix = true;
     menuSensitivity = 0.25;
     baseMouseSensitivity = 1.0;
-    security_acg = true;
+    security_acg = false;
     security_dep = true;
     disableStickyCamContextMenu = true;
 
@@ -53,7 +51,6 @@ void Config::Initialize(std::wstring& configFilePath) {
             configFile >> jsonConfig;
 
             frameRateLimit_client = jsonConfig.value("frameRateLimit_client", 60);
-            frameRateLimit_client_unlock = jsonConfig.value("frameRateLimit_client_unlock", false);
             frameRateLimit_hosting = jsonConfig.value("frameRateLimit_hosting", 60);
             frameTimingMode = jsonConfig.value("frameTimingMode", 1);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
@@ -63,7 +60,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             menuSensitivity = jsonConfig.value("menuSensitivity", 0.25);
             baseMouseSensitivity = jsonConfig.value("baseMouseSensitivity", 1.0);
             serverList = jsonConfig.value("serverList", std::vector<std::string> {});
-            security_acg = jsonConfig.value("security_acg", true);
+            security_acg = jsonConfig.value("security_acg", false);
             security_dep = jsonConfig.value("security_dep", true);
             disableStickyCamContextMenu = jsonConfig.value("disableStickyCamContextMenu", true);
             // Update the file with any new fields
@@ -126,8 +123,6 @@ void Config::Serialize() {
             nlohmann::json jsonConfig;
 
             jsonConfig["frameRateLimit_client"] = frameRateLimit_client;
-
-            jsonConfig["frameRateLimit_client_unlock"] = frameRateLimit_client_unlock;
 
             jsonConfig["frameRateLimit_hosting"] = frameRateLimit_hosting;
 

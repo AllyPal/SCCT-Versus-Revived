@@ -11,7 +11,6 @@ public:
     static bool applyAnimationFix;
     static bool widescreenAspectRatioFix;
     static float widescreenFovCap;
-    static bool frameRateLimit_client_unlock;
     static std::vector<std::string> serverList;
     static bool security_acg;
     static bool security_dep;

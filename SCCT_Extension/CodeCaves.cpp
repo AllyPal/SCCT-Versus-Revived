@@ -26,6 +26,150 @@ const int sleep = 0x10BDF108;
 
 Logger* logger_;
 
+void PrintConsoleHelp();
+
+static int thisConsole = 0;
+int setThisConsoleEntry = 0x10B0F15E;
+__declspec(naked) void setThisConsole() {
+    static int Return = 0x10B0F165;
+    __asm {
+        lea     eax, dword ptr[esi + 0x28]
+        mov[thisConsole], eax
+        mov     dword ptr[esi + 0x28], 0x10BF280C
+        jmp     dword ptr[Return]
+    }
+}
+
+static void WriteGameConsole(std::wstring message) {
+    static int WriteConsoleFunc = 0x109117A0;
+    if (!thisConsole) {
+        return;
+    }
+    const wchar_t* messagePtr = message.c_str();
+    __asm {
+        pushad
+        push messagePtr
+        mov ebx, dword ptr[thisConsole]
+        call dword ptr[WriteConsoleFunc]
+        popad
+    }
+    return;
+}
+
+struct CommandHandler {
+    std::wstring description;
+    std::function<void(const std::wstring&)> handler;
+};
+
+std::unordered_map<std::wstring, CommandHandler> getCommandHandlers() {
+    std::unordered_map<std::wstring, CommandHandler> commandHandlers;
+
+    if (Config::mouseInputFix) {
+        commandHandlers[L"sensitivity"] = {
+            std::format(L"{} - mouse sensitivity during gameplay.", Config::baseMouseSensitivity),
+
+            [](const std::wstring& arg) {
+            float sensitivity = std::stof(arg);
+            Config::baseMouseSensitivity = sensitivity;
+            WriteGameConsole(std::format(L"Sensitivity: {:.5f}", sensitivity));
+            }
+        };
+
+        commandHandlers[L"menu_sensitivity"] = {
+            std::format(L"{} - mouse sensitivity in menus.", Config::menuSensitivity),
+            [](const std::wstring& arg) {
+            float sensitivity = std::stof(arg);
+            Config::menuSensitivity = sensitivity;
+            WriteGameConsole(std::format(L"Menu Sensitivity: {:.5f}", sensitivity));
+            }
+        };
+    }
+
+    //commandHandlers[L"fps_client"] = {
+    //    L"Sets the frame rate whilst connected to servers.",
+    //    [](const std::wstring& arg) {
+    //    auto frameLimit = std::stoi(arg);
+    //    if (frameLimit < 30) {
+    //        frameLimit = 30;
+    //    }
+    //    Config::frameRateLimit_client = frameLimit;
+    //    WriteGameConsole(std::format(L"Frame rate as client: {:}", frameLimit));
+    //    }
+    //};
+
+    //commandHandlers[L"fps_hosting"] = {
+    //    L"Sets the frame rate whilst hosting.",
+    //    [](const std::wstring& arg) {
+    //    auto frameLimit = std::stoi(arg);
+    //    if (frameLimit < 30) {
+    //        frameLimit = 30;
+    //    }
+    //    Config::frameRateLimit_hosting = frameLimit;
+    //    WriteGameConsole(std::format(L"Frame rate whilst hosting: {:}", frameLimit));
+    //    }
+    //};
+
+    commandHandlers[L"quit"] = {
+        L"Exits the game",
+        [](const std::wstring& arg) {
+        exit(0);
+        }
+    };
+
+    commandHandlers[L"help"] = {
+        L"Display command list",
+        [](const std::wstring& arg) {
+            PrintConsoleHelp();
+        }
+    };
+    return commandHandlers;
+}
+
+void PrintConsoleHelp() {
+    auto commandHandlers = getCommandHandlers();
+
+    for (const auto& [key, handler] : commandHandlers) {
+        WriteGameConsole(std::format(L" > {}: {}", key, handler.description));
+    }
+}
+
+void ProcessConsole(uintptr_t inputPtr) {
+    wchar_t* input = reinterpret_cast<wchar_t*>(inputPtr);
+    std::wcout << L"Input: " << input << std::endl;
+
+    std::wistringstream iss(input);
+    std::wstring command, arg;
+    iss >> command >> arg;
+
+    auto commandHandlers = getCommandHandlers();
+    if (commandHandlers.find(command) != commandHandlers.end()) {
+        try {
+            commandHandlers[command].handler(arg);
+        }
+        catch (...){
+            WriteGameConsole(L"Unexpected input format.");
+        }
+    }
+}
+
+int ConsoleInputEntry = 0x10B0F639;
+__declspec(naked) void ConsoleInput() {
+    static int Return = 0x10B0F63E;
+    static uintptr_t inputPtr = 0;
+    __asm {
+        pushad
+        mov [inputPtr], esi
+    }
+    ProcessConsole(inputPtr);
+    __asm {
+        popad
+        push esi
+        lea eax, [edi - 0x2C]
+        push eax
+        jmp dword ptr[Return]
+    }
+}
+
 static std::string WStringToString(const std::wstring& wstr)
 {
     if (wstr.empty()) return std::string();
@@ -249,7 +393,6 @@ __declspec(naked) void InstaFixPrototype() {
 
 static D3DPRESENT_PARAMETERS* overriddenD3dpp;
 void ProcessDpp(D3DPRESENT_PARAMETERS* d3dpp) {
-
     std::cout << "FullScreen_RefreshRateInHz: " << d3dpp->FullScreen_RefreshRateInHz << std::endl;
     std::cout << "BackBufferWidth: " << d3dpp->BackBufferWidth << std::endl;
     std::cout << "AutoDepthStencilFormat: " << d3dpp->AutoDepthStencilFormat << std::endl;
@@ -364,16 +507,21 @@ void DebugD3D() {
     std::wcout << std::fixed << std::hex << "MaxPixelShaderValue: " << caps.MaxPixelShaderValue << std::endl;
 }
 
-extern "C" LONG RtlGetVersion(OSVERSIONINFOEXW*);
+typedef LONG NTSTATUS;
+typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(OSVERSIONINFOEXW*);
 
 bool IsWindows10OrGreater() {
-
+    HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
+    if (hMod) {
+        RtlGetVersionPtr pRtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
+        if (pRtlGetVersion) {
     OSVERSIONINFOEXW osInfo = { 0 };
     osInfo.dwOSVersionInfoSize = sizeof(osInfo);
-
-    // Call RtlGetVersion to get the OS version
-    if (RtlGetVersion(&osInfo) == 0) {
+            if (pRtlGetVersion(&osInfo) == 0) {
+                std::cout << "win: " << osInfo.dwMajorVersion << std::endl;
         return osInfo.dwMajorVersion >= 10;
+    }
+        }
     }
     
     return false;
@@ -395,7 +543,7 @@ bool IsSetProcessMitigationPolicySupported() {
 // Enables features which reduce the risks of potential buffer overflow vulernabilities in the base game
 void EnableProcessSecurity()
 {
-    if (Config::security_acg && IsSetProcessMitigationPolicySupported()) {
+    if (IsSetProcessMitigationPolicySupported && Config::security_acg) {
         PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy = {};
         policy.ProhibitDynamicCode = 1;
         if (SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy, sizeof(policy))) {
@@ -521,7 +669,6 @@ __declspec(naked) void MercEnhancedRealityStationary() {
         push ebx
         push esi
         call dword ptr[MercErStationary]
-
     }
 
     isMercEnhancedRealityStationary = false;
@@ -1356,7 +1503,6 @@ void printTest() {
     logger_->log("unknown: " + toHexString(unknown));
     logger_->log("addr: " + toHexString(addr));
 
-    
     logger_->log("");
 }
 
@@ -1560,7 +1706,6 @@ void CodeCaves::Initialize()
 
     WriteJump(startFrameTimerEntry, beforePresent);
     WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
-    if (Config::frameRateLimit_client_unlock)
         WriteJump(removeClientFpsCapEntry, removeClientFpsCap);
 
     WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
@@ -1585,6 +1730,9 @@ void CodeCaves::Initialize()
     WriteJump(SetLvInEntry, SetLvIn);
     WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);
     WriteJump(OnStateChangeEntry, OnStateChange);
+    WriteJump(ConsoleInputEntry, ConsoleInput);
+    WriteJump(setThisConsoleEntry, setThisConsole);
+    WriteJump(consoleCreatedEntry, consoleCreated);
 
     if (Config::mouseInputFix) {
         WriteJump(DisableMouseInputEntry, DisableMouseInput);
