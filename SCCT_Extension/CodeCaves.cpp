@@ -150,7 +150,7 @@ void ProcessConsole(uintptr_t inputPtr) {
         try {
             commandHandlers[command].handler(arg);
         }
-        catch (...){
+        catch (...) {
             WriteGameConsole(L"Unexpected input format.");
         }
     }
@@ -648,6 +648,25 @@ void ApplyHeightScaling(D3DMATRIX* projMatrix, D3DDISPLAYMODE& d3dDisplayMode)
     }
 }
 
+static bool renderingHudMenu = false;
+int startRenderMenuEntry = 0x10A0FDC0;
+__declspec(naked) void startHudMenuRender() {
+    static int Return = 0x10A0FDC6;
+    __asm {
+        mov dword ptr[renderingHudMenu], 1
+        mov     eax, [esi + 0x28]
+        mov     ecx, [eax + 0x30]
+        jmp     dword ptr[Return]
+    }
+}
+int endRenderMenuEntry = 0x10A0FE4B;
+__declspec(naked) void endHudMenuRender() {
+    __asm {
+        mov dword ptr[renderingHudMenu], 0
+        retn    4
+    }
+}
+
 static bool isMercEnhancedRealityStationary = 0;
 
 static int MercEnhancedRealityStationaryEntry = 0x10AF8069;
@@ -662,11 +681,23 @@ __declspec(naked) void MercEnhancedRealityStationary() {
         call dword ptr[MercErStationary]
     }
 
-    isMercEnhancedRealityStationary = false;
-    __asm {
-        jmp dword ptr[Return]
-    }
-}
+//static int MercEnhancedRealityStationaryEntry = 0x10AF8069;
+//__declspec(naked) void MercEnhancedRealityStationary() {
+//    static int Return = 0x10AF8072;
+//    static int MercErStationary = 0x10AF8C00;
+//    isMercEnhancedRealityStationary = true;
+//    __asm {
+//        push    0
+//        push ebx
+//        push esi
+//        call dword ptr[MercErStationary]
+//    }
+//
+//    isMercEnhancedRealityStationary = false;
+//    __asm {
+//        jmp dword ptr[Return]
+//    }
+//}
 
 static bool isSpyEnhancedRealityStationary = 0;
 static int SpyEnhancedRealityStationaryEntry = 0x10A90ED2;
@@ -1712,9 +1743,9 @@ void CodeCaves::Initialize()
 
         WriteJump(viewFixEntry, viewFix);
         WriteJump(viewFix2Entry, viewFix);
-        WriteJump(MercEnhancedRealityStationaryEntry, MercEnhancedRealityStationary);
-        WriteJump(SpyEnhancedRealityStationaryEntry, SpyEnhancedRealityStationary);
-        WriteJump(FixMovingEnhancedRealityScalingEntry, FixMovingEnhancedRealityScaling);
+
+        WriteJump(startRenderMenuEntry, startHudMenuRender);
+        WriteJump(endRenderMenuEntry, endHudMenuRender);
     }
 
     WriteJump(DPPEntry, DPP);

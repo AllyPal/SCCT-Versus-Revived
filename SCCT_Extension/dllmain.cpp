@@ -43,8 +43,6 @@ void RedirectToConsole()
     std::cout << "SCCT Versus Revived injected successfully" << std::endl;
 }
 
-
-
 const int BaseAddress = 0x10900000;
 Logger* logger = nullptr;
 BOOL CALLBACK InitFunction(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context) {
