@@ -71,6 +71,7 @@ std::unordered_map<std::wstring, CommandHandler> getCommandHandlers() {
             [](const std::wstring& arg) {
             float sensitivity = std::stof(arg);
             Config::baseMouseSensitivity = sensitivity;
+            Config::Serialize();
             WriteGameConsole(std::format(L"Sensitivity: {:.5f}", sensitivity));
             }
         };
@@ -80,6 +81,7 @@ std::unordered_map<std::wstring, CommandHandler> getCommandHandlers() {
             [](const std::wstring& arg) {
             float sensitivity = std::stof(arg);
             Config::menuSensitivity = sensitivity;
+            Config::Serialize();
             WriteGameConsole(std::format(L"Menu Sensitivity: {:.5f}", sensitivity));
             }
         };
@@ -93,6 +95,7 @@ std::unordered_map<std::wstring, CommandHandler> getCommandHandlers() {
     //        frameLimit = 30;
     //    }
     //    Config::frameRateLimit_client = frameLimit;
+    //    Config::Serialize();
     //    WriteGameConsole(std::format(L"Frame rate as client: {:}", frameLimit));
     //    }
     //};
@@ -105,6 +108,7 @@ std::unordered_map<std::wstring, CommandHandler> getCommandHandlers() {
     //        frameLimit = 30;
     //    }
     //    Config::frameRateLimit_hosting = frameLimit;
+    //    Config::Serialize();
     //    WriteGameConsole(std::format(L"Frame rate whilst hosting: {:}", frameLimit));
     //    }
     //};
@@ -1732,7 +1736,6 @@ void CodeCaves::Initialize()
     WriteJump(OnStateChangeEntry, OnStateChange);
     WriteJump(ConsoleInputEntry, ConsoleInput);
     WriteJump(setThisConsoleEntry, setThisConsole);
-    WriteJump(consoleCreatedEntry, consoleCreated);
 
     if (Config::mouseInputFix) {
         WriteJump(DisableMouseInputEntry, DisableMouseInput);
