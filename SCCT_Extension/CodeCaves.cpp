@@ -531,23 +531,10 @@ bool IsWindows10OrGreater() {
     return false;
 }
 
-bool IsSetProcessMitigationPolicySupported() {
-    if (IsWindows10OrGreater()) {
-        HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
-        if (hKernel32 != NULL) {
-            auto SetProcessMitigationPolicy = GetProcAddress(hKernel32, "SetProcessMitigationPolicy");
-            FreeLibrary(hKernel32);
-            return SetProcessMitigationPolicy != NULL;
-        }
-    }
-
-    return false;
-}
-
 // Enables features which reduce the risks of potential buffer overflow vulernabilities in the base game
 void EnableProcessSecurity()
 {
-    if (IsSetProcessMitigationPolicySupported && Config::security_acg) {
+    if (Config::security_acg && IsWindows10OrGreater) {
         PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy = {};
         policy.ProhibitDynamicCode = 1;
         if (SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy, sizeof(policy))) {
