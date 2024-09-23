@@ -1,17 +1,17 @@
 #pragma once
 #include "pch.h"
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <iomanip>
-#include <sstream>
-#include <Windows.h>
-#include <thread>
-#include <chrono>
+#include "Config.h"
 #include "include/nlohmann/json.hpp"
 #include "logger.h"
-#include "Config.h"
+#include <chrono>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <vector>
+#include <Windows.h>
 
 class CodeCaves
 {
@@ -51,7 +51,7 @@ struct LvIn {
         return *reinterpret_cast<NetMode*>(unspecified + (0x4A8));
     }
 
-    PlC& lPlC() {
-        return **reinterpret_cast<PlC**>(unspecified + (0x514));
+    PlC* lPlC() {
+        return *reinterpret_cast<PlC**>(unspecified + (0x514));
     }
 };

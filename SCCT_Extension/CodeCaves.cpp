@@ -831,23 +831,23 @@ float originalDfv = 0.0;
 float hSfv = 0.0;
 float hDfv = 0.0;
 void WidescreenViewFix() {
-    if (lvIn != NULL && &lvIn->lPlC() != NULL && pDevice != NULL) {
+    if (lvIn != NULL && lvIn->lPlC() != NULL && pDevice != NULL) {
         // Copy/pasted.  TODO: Refactor
         D3DDISPLAYMODE d3dDisplayMode;
         pDevice->GetDisplayMode(&d3dDisplayMode);
-        float defv = lvIn->lPlC().Defv();
+        float defv = lvIn->lPlC()->Defv();
         float displayHeight = static_cast<float>(d3dDisplayMode.Height);
         float displayWidth = static_cast<float>(d3dDisplayMode.Width);
         displayWidth = min(displayWidth, d3dDisplayMode.Height * (16.0f / 9.0));
 
         if (displayWidthLast != displayWidth || displayHeightLast != displayHeight || (defv != hSfv && defv != hDfv)) {
             if (originalSfv == 0.0) {
-                originalSfv = lvIn->lPlC().Sfv();
-                originalDfv = lvIn->lPlC().Dfv();
+                originalSfv = lvIn->lPlC()->Sfv();
+                originalDfv = lvIn->lPlC()->Dfv();
             }
 
-            bool wasSfv = lvIn->lPlC().Defv() == hSfv;
-            bool wasDfv = lvIn->lPlC().Defv() == hDfv;
+            bool wasSfv = lvIn->lPlC()->Defv() == hSfv;
+            bool wasDfv = lvIn->lPlC()->Defv() == hDfv;
 
             auto aspectRatio = displayWidth / displayHeight;
             aspectRatioMenuVertMouseInputMultiplier = aspectRatio/(4.0 / 3.0);
@@ -855,10 +855,10 @@ void WidescreenViewFix() {
             hDfv = ConvertFOV(originalDfv, aspectRatio);
 
             if (wasSfv) {
-                lvIn->lPlC().Defv() = hSfv;
+                lvIn->lPlC()->Defv() = hSfv;
             }
             else if (wasDfv) {
-                lvIn->lPlC().Defv() = hDfv;
+                lvIn->lPlC()->Defv() = hDfv;
             }
 
             // last calculated
@@ -866,8 +866,8 @@ void WidescreenViewFix() {
             displayWidthLast = displayWidth;
         }
 
-        lvIn->lPlC().Sfv() = hSfv;
-        lvIn->lPlC().Dfv() = hDfv;
+        lvIn->lPlC()->Sfv() = hSfv;
+        lvIn->lPlC()->Dfv() = hDfv;
     }
 }
 
