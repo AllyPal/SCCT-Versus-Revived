@@ -11,6 +11,8 @@
 #include <chrono>
 #include <timeapi.h>
 #include <Windows.h>
+#include "StringOperations.h"
+#include "MemoryWriter.h"
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
@@ -26,7 +28,6 @@ const int sleep = 0x10BDF108;
 
 void PrintConsoleHelp();
 void PrintConsoleValues();
-bool __cdecl WriteBytes(uintptr_t targetAddress, const uint8_t* bytes, size_t length);
 
 static int thisConsole = 0;
 int setThisConsoleEntry = 0x10B0F15E;
@@ -135,7 +136,7 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
         [](const std::wstring& arg) {
             const uint8_t NOP = 0x90;
             uint8_t nops[] = { NOP, NOP };
-            WriteBytes(0x10AA0535, nops, sizeof(nops));
+            MemoryWriter::WriteBytes(0x10AA0535, nops, sizeof(nops));
         }
     };
 
@@ -230,9 +231,9 @@ uintptr_t scriptNamePtr;
 void PrintUnrealScriptDebug() {
     wchar_t* unicodeStringPtr = reinterpret_cast<wchar_t*>(scriptNamePtr);
     std::wstring unicodeString(unicodeStringPtr);
-    std::string output = WStringToString(unicodeString);
+    std::string output = StringOperations::WStringToString(unicodeString);
     if (output.compare(0, 3, "IK_") == 1) {//output.starts_with("IK_")) {
-        std::cout << "Unreal Script: " << WStringToString(unicodeString) << std::endl;
+        std::cout << "Unreal Script: " << StringOperations::WStringToString(unicodeString) << std::endl;
     }
 }
 
@@ -318,7 +319,7 @@ void HandleMouseInput(LPDIRECTINPUTDEVICE8 device, int dd) {
         }
 
         if (FAILED(hr)) {
-            std::cerr << "Failed to get device state. Error code: " << toHexString(hr) << std::endl;
+            std::cerr << "Failed to get device state. Error code: " << StringOperations::toHexString(hr) << std::endl;
             return;
         }
     }
@@ -850,7 +851,7 @@ int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t me
     if (Config::useDirectConnect) {
 #pragma warning(push)
 #pragma warning(disable: 4996)
-        to.sin_addr.s_addr = inet_addr(WStringToString(Config::directConnectIp).c_str());
+        to.sin_addr.s_addr = inet_addr(StringOperations::WStringToString(Config::directConnectIp).c_str());
 #pragma warning(pop)
         to.sin_port = htons(hostshort);
         auto directConnectResult = SendPacket(to, messagePtr, _socket, messageLength);
@@ -1495,11 +1496,11 @@ void printTest() {
     std::wstring unicodeString(unicodeStringPtr);
     Logger::log(L"name: " + unicodeString);
     Logger::log("id: " + std::to_string(id));
-    Logger::log("hexid: " + toHexString(id));
-    Logger::log("hexidoffset: " + toHexString(id * 4));
-    Logger::log("flags: " + toHexString(flags));
-    Logger::log("unknown: " + toHexString(unknown));
-    Logger::log("addr: " + toHexString(addr));
+    Logger::log("hexid: " + StringOperations::toHexString(id));
+    Logger::log("hexidoffset: " + StringOperations::toHexString(id * 4));
+    Logger::log("flags: " + StringOperations::toHexString(flags));
+    Logger::log("unknown: " + StringOperations::toHexString(unknown));
+    Logger::log("addr: " + StringOperations::toHexString(addr));
 
     Logger::log("");
 }
@@ -1696,55 +1697,56 @@ bool __cdecl WriteJump(uintptr_t targetAddress, void(*function)()) {
 void CodeCaves::Initialize()
 {
     if (Config::applyAnimationFix)
-        WriteJump(animatedTextureFixEntry, animatedTextureFix);
+        MemoryWriter::WriteJump(animatedTextureFixEntry, animatedTextureFix);
 
-    WriteJump(startFrameTimerEntry, beforePresent);
-    WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
-        WriteJump(removeClientFpsCapEntry, removeClientFpsCap);
+    MemoryWriter::WriteJump(startFrameTimerEntry, beforePresent);
+    MemoryWriter::WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
+    MemoryWriter::WriteJump(removeClientFpsCapEntry, removeClientFpsCap);
 
-    WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
-    WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
-    WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
-    WriteJump(DeviceEntry, Device);
+    MemoryWriter::WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
+    MemoryWriter::WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
+    MemoryWriter::WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
+    MemoryWriter::WriteJump(DeviceEntry, Device);
 
     if (Config::widescreenAspectRatioFix) {
-        WriteJump(SetProjection1Entry, SetProjection1);
-        WriteJump(SetProjection2Entry, SetProjection2);
+        MemoryWriter::WriteJump(SetProjection1Entry, SetProjection1);
+        MemoryWriter::WriteJump(SetProjection2Entry, SetProjection2);
         // May be redundant
-        WriteJump(SetProjection3Entry, SetProjection3);
+        MemoryWriter::WriteJump(SetProjection3Entry, SetProjection3);
 
-        WriteJump(viewFixEntry, viewFix);
-        WriteJump(viewFix2Entry, viewFix);
+        MemoryWriter::WriteJump(viewFixEntry, viewFix);
+        MemoryWriter::WriteJump(viewFix2Entry, viewFix);
 
-        WriteJump(startRenderMenuEntry, startHudMenuRender);
-        WriteJump(endRenderMenuEntry, endHudMenuRender);
+        MemoryWriter::WriteJump(startRenderMenuEntry, startHudMenuRender);
+        MemoryWriter::WriteJump(endRenderMenuEntry, endHudMenuRender);
     }
 
     WriteJump(DPPEntry, DPP);
-    WriteJump(SetLvInEntry, SetLvIn);
-    WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);
-    WriteJump(OnStateChangeEntry, OnStateChange);
-    WriteJump(ConsoleInputEntry, ConsoleInput);
-    WriteJump(setThisConsoleEntry, setThisConsole);
+    MemoryWriter::WriteJump(DPPEntry, DPP);
+    MemoryWriter::WriteJump(SetLvInEntry, SetLvIn);
+    MemoryWriter::WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);
+    MemoryWriter::WriteJump(OnStateChangeEntry, OnStateChange);
+    MemoryWriter::WriteJump(ConsoleInputEntry, ConsoleInput);
+    MemoryWriter::WriteJump(setThisConsoleEntry, setThisConsole);
 
     if (Config::mouseInputFix) {
-        WriteJump(DisableMouseInputEntry, DisableMouseInput);
-        WriteJump(FixMouseInputEntry, FixMouseInput);
-        WriteJump(X_WriteMouseInputEntry, X_WriteMouseInput);
-        WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
-        WriteJump(MenuMouseSensitivityYEntry, MenuMouseSensitivityY);
-        WriteJump(MenuMouseSensitivityXEntry, MenuMouseSensitivityX);
-        WriteJump(BaseMouseSensitivityEntry, BaseMouseSensitivity);
-        WriteJump(NegativeAccelerationEntry, NegativeAcceleration);
+        MemoryWriter::WriteJump(DisableMouseInputEntry, DisableMouseInput);
+        MemoryWriter::WriteJump(FixMouseInputEntry, FixMouseInput);
+        MemoryWriter::WriteJump(X_WriteMouseInputEntry, X_WriteMouseInput);
+        MemoryWriter::WriteJump(Y_WriteMouseInputEntry, Y_WriteMouseInput);
+        MemoryWriter::WriteJump(MenuMouseSensitivityYEntry, MenuMouseSensitivityY);
+        MemoryWriter::WriteJump(MenuMouseSensitivityXEntry, MenuMouseSensitivityX);
+        MemoryWriter::WriteJump(BaseMouseSensitivityEntry, BaseMouseSensitivity);
+        MemoryWriter::WriteJump(NegativeAccelerationEntry, NegativeAcceleration);
     }
 
     if (Config::disableStickyCamContextMenu) {
         /*WriteJump(StickyCamContextMenuBlock1Entry, StickyCamContextMenuBlock1);
         WriteJump(StickyCamContextMenuBlock2Entry, StickyCamContextMenuBlock2);*/
-        WriteJump(StickyCamContextMenuBlock3Entry, StickyCamContextMenuBlock3);
+        MemoryWriter::WriteJump(StickyCamContextMenuBlock3Entry, StickyCamContextMenuBlock3);
         
         uint8_t shortJump[] = { 0xEB };
-        WriteBytes(0x10B2CE1B, shortJump, sizeof(shortJump));
+        MemoryWriter::WriteBytes(0x10B2CE1B, shortJump, sizeof(shortJump));
     }
     //WriteJump(unrealScriptNameDefinitionLookupEntry, unrealScriptNameDefinitionLookup);
     //WriteJump(0x1093B590, test);
