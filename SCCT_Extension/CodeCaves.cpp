@@ -24,8 +24,6 @@ const int timeBeginPeriodAddr = 0x10BDF53C;
 const int timeEndPeriodAddr = 0x10BDF538;
 const int sleep = 0x10BDF108;
 
-Logger* logger_;
-
 void PrintConsoleHelp();
 void PrintConsoleValues();
 bool __cdecl WriteBytes(uintptr_t targetAddress, const uint8_t* bytes, size_t length);
@@ -1495,15 +1493,15 @@ int addr = 0;
 void printTest() {
     wchar_t* unicodeStringPtr = reinterpret_cast<wchar_t*>(dummy4);
     std::wstring unicodeString(unicodeStringPtr);
-    logger_->log(L"name: " + unicodeString);
-    logger_->log("id: " + std::to_string(id));
-    logger_->log("hexid: " + toHexString(id));
-    logger_->log("hexidoffset: " + toHexString(id * 4));
-    logger_->log("flags: " + toHexString(flags));
-    logger_->log("unknown: " + toHexString(unknown));
-    logger_->log("addr: " + toHexString(addr));
+    Logger::log(L"name: " + unicodeString);
+    Logger::log("id: " + std::to_string(id));
+    Logger::log("hexid: " + toHexString(id));
+    Logger::log("hexidoffset: " + toHexString(id * 4));
+    Logger::log("flags: " + toHexString(flags));
+    Logger::log("unknown: " + toHexString(unknown));
+    Logger::log("addr: " + toHexString(addr));
 
-    logger_->log("");
+    Logger::log("");
 }
 
 static int ScctEnhancedIdentifier = 0x10C42DA4;
@@ -1650,27 +1648,27 @@ __declspec(naked) void MenuMouseSensitivityX() {
 }
 
 bool __cdecl WriteBytes(uintptr_t targetAddress, const uint8_t* bytes, size_t length) {
-    logger_->log("Writing bytes at " + toHexString(targetAddress));
+    Logger::log("Writing bytes at " + toHexString(targetAddress));
 
     DWORD oldProtect;
     if (!VirtualProtect(reinterpret_cast<LPVOID>(targetAddress), length, PAGE_READWRITE, &oldProtect)) {
-        logger_->log("Failed to change memory protection");
+        Logger::log("Failed to change memory protection");
         return false;
     }
 
     memcpy(reinterpret_cast<void*>(targetAddress), bytes, length);
     if (!VirtualProtect(reinterpret_cast<LPVOID>(targetAddress), length, oldProtect, &oldProtect)) {
-        logger_->log("Failed to restore memory protection");
+        Logger::log("Failed to restore memory protection");
         return false;
     }
 
     FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<LPCVOID>(targetAddress), length);
-    logger_->log("Finished writing bytes at " + toHexString(targetAddress));
+    Logger::log("Finished writing bytes at " + toHexString(targetAddress));
     return true;
 }
 
 bool __cdecl WriteJump(uintptr_t targetAddress, void(*function)()) {
-    logger_->log("Writing jump at " + toHexString(targetAddress));
+    Logger::log("Writing jump at " + toHexString(targetAddress));
     uintptr_t functionAddress = reinterpret_cast<uintptr_t>(function);
     uintptr_t relativeAddress = (functionAddress - targetAddress - 5);
     uint8_t jump[5];
@@ -1679,23 +1677,19 @@ bool __cdecl WriteJump(uintptr_t targetAddress, void(*function)()) {
 
     DWORD oldProtect;
     if (!VirtualProtect(reinterpret_cast<LPVOID>(targetAddress), sizeof(jump), PAGE_EXECUTE_READWRITE, &oldProtect)) {
-        logger_->log("Failed to change memory protection");
+        Logger::log("Failed to change memory protection");
         return false;
     }
 
     memcpy(reinterpret_cast<void*>(targetAddress), jump, sizeof(jump));
     if (!VirtualProtect(reinterpret_cast<LPVOID>(targetAddress), sizeof(jump), oldProtect, &oldProtect)) {
-        logger_->log("Failed to restore memory protection");
+        Logger::log("Failed to restore memory protection");
         return false;
     }
 
     FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<LPCVOID>(targetAddress), sizeof(jump));
-    logger_->log("Finished writing jump at " + toHexString(targetAddress));
+    Logger::log("Finished writing jump at " + toHexString(targetAddress));
     return true;
-}
-
-CodeCaves::CodeCaves(Logger* loggerIn) {
-    logger_ = loggerIn;
 }
 
 #define DISSECT FALSE

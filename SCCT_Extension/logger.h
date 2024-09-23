@@ -15,10 +15,9 @@
 
 class Logger
 {
-private:
-	std::wstring logFilePath;
 public:
-	void log(const std::string& message);
-	void log(const std::wstring& message);
-	Logger(const std::wstring& dllPath);
+	static void log(const std::string& message);
+	static void log(const std::wstring& message);
+
+	static void Initialize(const std::wstring& dllPath);
 };

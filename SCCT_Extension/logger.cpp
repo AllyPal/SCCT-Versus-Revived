@@ -12,7 +12,7 @@
 #include <memory>
 #include <chrono>
 
-std::wstring logFilePath;
+static std::wstring logFilePath;
 
 void Logger::log(const std::string& message) {
     std::ofstream logFile(logFilePath, std::ios::app);
@@ -36,7 +36,9 @@ void Logger::log(const std::wstring& message) {
     logFile.close();
 }
 
-Logger::Logger(const std::wstring& dllPath) : logFilePath(dllPath + L".log") {
+void Logger::Initialize(const std::wstring& dllPath)
+{
+    logFilePath = dllPath + L".log";
     std::wofstream logFile(logFilePath, std::ios::trunc);
     if (!logFile.is_open()) {
         std::wcerr << L"Error: Could not open the file for clearing." << std::endl;

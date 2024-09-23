@@ -44,7 +44,6 @@ void RedirectToConsole()
 }
 
 const int BaseAddress = 0x10900000;
-Logger* logger = nullptr;
 BOOL CALLBACK InitFunction(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context) {
     HMODULE hModule = static_cast<HMODULE>(Parameter);
     auto dllPath = GetDllPath(hModule);
@@ -53,17 +52,17 @@ BOOL CALLBACK InitFunction(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
     RedirectToConsole();
 #endif
 
-    logger = new Logger(dllPath);
+    Logger::Initialize(dllPath);
     auto configPath = directoryPath + L"\\SCCT_config.json";
-    logger->log("");
-    logger->log(L"Loading " + configPath);
+    Logger::log("");
+    Logger::log(L"Loading " + configPath);
     Config::Initialize(configPath);
-    logger->log(L"applyAnimationFix: " + std::to_wstring(Config::applyAnimationFix));
-    logger->log(L"frameRateLimit_hosting:" + std::to_wstring(Config::frameRateLimit_hosting));
-    logger->log(L"frameRateLimit_client:" + std::to_wstring(Config::frameRateLimit_client));
+    Logger::log(L"applyAnimationFix: " + std::to_wstring(Config::applyAnimationFix));
+    Logger::log(L"frameRateLimit_hosting:" + std::to_wstring(Config::frameRateLimit_hosting));
+    Logger::log(L"frameRateLimit_client:" + std::to_wstring(Config::frameRateLimit_client));
 
-    CodeCaves caves(logger);
-    caves.Initialize();
+    auto codeCaves = CodeCaves();
+    codeCaves.Initialize();
     return TRUE;
 }
 
