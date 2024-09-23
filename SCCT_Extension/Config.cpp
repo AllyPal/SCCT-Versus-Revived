@@ -5,7 +5,7 @@
 #include "include/nlohmann/json.hpp"
 #include <vector>
 
-static std::wstring* configFilePathRef;
+static std::wstring configFilePathRef;
 int Config::frameRateLimit_client;
 int Config::frameRateLimit_hosting;
 int Config::frameTimingMode;
@@ -26,7 +26,7 @@ bool Config::disableStickyCamContextMenu;
 std::vector<std::string> Config::serverList;
 
 void Config::Initialize(std::wstring& configFilePath) {
-    configFilePathRef = &configFilePath;
+    configFilePathRef = configFilePath;
     frameRateLimit_client = 60;
     frameRateLimit_hosting = 60;
     frameTimingMode = 1;
@@ -43,7 +43,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     security_dep = true;
     disableStickyCamContextMenu = true;
 
-    std::ifstream configFile(*configFilePathRef);
+    std::ifstream configFile(configFilePathRef);
 
     if (configFile.is_open()) {
         try {
@@ -63,7 +63,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             security_acg = jsonConfig.value("security_acg", false);
             security_dep = jsonConfig.value("security_dep", true);
             disableStickyCamContextMenu = jsonConfig.value("disableStickyCamContextMenu", true);
-            configFile.close();
+            //configFile.close();
             // Update the file with any new fields
             Serialize();
         }
@@ -117,9 +117,9 @@ void Config::ProcessCommandLine()
 }
 
 bool Config::Serialize() {
-    std::ofstream configFile(*configFilePathRef);
+    std::ofstream configFile(configFilePathRef);
 
-    if (configFile.is_open()) {
+    if (configFile) {
         try {
             nlohmann::json jsonConfig;
 
@@ -138,7 +138,6 @@ bool Config::Serialize() {
             jsonConfig["disableStickyCamContextMenu"] = disableStickyCamContextMenu;
 
             configFile << jsonConfig.dump(4);
-            configFile.close();
             return true;
         }
         catch (const std::exception& e) {
