@@ -18,20 +18,6 @@
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
-uintptr_t scriptNamePtr;
-void PrintUnrealScriptDebug() {
-    wchar_t* unicodeStringPtr = reinterpret_cast<wchar_t*>(scriptNamePtr);
-    std::wstring unicodeString(unicodeStringPtr);
-    std::string output = StringOperations::WStringToString(unicodeString);
-    if (output.compare(0, 3, "IK_") == 1) {//output.starts_with("IK_")) {
-        std::cout << "Unreal Script: " << StringOperations::WStringToString(unicodeString) << std::endl;
-    }
-}
-
-void PrintTest() {
-    std::cout << "Redirected" << std::endl;
-}
-
 LvIn* CodeCaves::lvIn = nullptr;
 int SetLvInEntry = 0x109ADFB3;
 __declspec(naked) void SetLvIn() {
@@ -48,15 +34,13 @@ bool CodeCaves::IsListenServer() {
     return CodeCaves::lvIn->netMode() == NetMode::ListenServer;
 }
 
-int InstaFixPrototypeEntry = 0x10AB8DAA;
-__declspec(naked) void InstaFixPrototype() {
-    static int InstaFixPrototypeResume = 0x10AB8DE9;
+int InstaFixEntry = 0x10AB8DAA;
+__declspec(naked) void InstaFix() {
+    static int InstaFixResume = 0x10AB8DE9;
     __asm {
-        jmp dword ptr[InstaFixPrototypeResume];
+        jmp dword ptr[InstaFixResume];
     }
 }
-
-
 
 typedef LONG NTSTATUS;
 typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(OSVERSIONINFOEXW*);
@@ -92,41 +76,6 @@ void CodeCaves::EnableProcessSecurity()
     if (Config::security_dep && SetProcessDEPPolicy(PROCESS_DEP_ENABLE)) {
         std::cout << "DEP enabled" << std::endl;
     }
-}
-
-int unrealScriptNameDefinitionLookupEntry = 0x1091FF70;
-__declspec(naked) void unrealScriptNameDefinitionLookup() {
-    __asm {
-        push    edi
-        mov     edi, eax
-        cmp     word ptr[edi], 00
-        jne     nameDefined
-        mov     dword ptr[ebx], 00000000
-        mov     eax, ebx
-        pop     edi
-        ret     0004
-
-        nameDefined:
-        mov     dword ptr[scriptNamePtr], eax
-            pushad
-    }
-
-    static int loc_0x1091FF70 = 0x1091FF85;
-    PrintUnrealScriptDebug();
-    __asm {
-        popad
-        jmp     dword ptr[loc_0x1091FF70]
-    }
-}
-
-float GetPerformance() {
-    static int getPerformanceAddress = 0x10904030;
-    float result;
-    __asm {
-        call dword ptr[getPerformanceAddress]
-        fstp dword ptr[result]
-    }
-    return result;
 }
 
 
@@ -374,28 +323,8 @@ __declspec(naked) void OnStateChange() {
     }
 }
 
-//static int StickyCamContextMenuBlock1Entry = 0x10B2D2D3;
-//__declspec(naked) void StickyCamContextMenuBlock1() {
-//    static int Return = 0x10B2D2D9;
-//    __asm {
-//        xor edx, edx
-//        mov[ebx + 0x37C], edx
-//        jmp dword ptr[Return]
-//    }
-//}
-//
-//static int StickyCamContextMenuBlock2Entry = 0x10B2D263;
-//__declspec(naked) void StickyCamContextMenuBlock2() {
-//    static int Return = 0x10B2D269;
-//    __asm {
-//        mov[ebx + 0x37C], 0
-//        cmp esi, [ebx + 0x37C]
-//        jmp dword ptr[Return]
-//    }
-//}
-
-static int StickyCamContextMenuBlock3Entry = 0x10B2D1C0;
-__declspec(naked) void StickyCamContextMenuBlock3() {
+static int StickyCamContextMenuBlockEntry = 0x10B2D1C0;
+__declspec(naked) void StickyCamContextMenuBlock() {
     __asm {
         mov eax, ecx
         mov eax, [eax + 0xB4]
@@ -406,107 +335,14 @@ __declspec(naked) void StickyCamContextMenuBlock3() {
     }
 }
 
-int id = 0;
-int flags = 0;
-int unknown = 0;
-uintptr_t dummy4;
-int offs = 0;
-int addr = 0;
-
-void printTest() {
-    wchar_t* unicodeStringPtr = reinterpret_cast<wchar_t*>(dummy4);
-    std::wstring unicodeString(unicodeStringPtr);
-    Logger::log(L"name: " + unicodeString);
-    Logger::log("id: " + std::to_string(id));
-    Logger::log("hexid: " + StringOperations::toHexString(id));
-    Logger::log("hexidoffset: " + StringOperations::toHexString(id * 4));
-    Logger::log("flags: " + StringOperations::toHexString(flags));
-    Logger::log("unknown: " + StringOperations::toHexString(unknown));
-    Logger::log("addr: " + StringOperations::toHexString(addr));
-
-    Logger::log("");
-}
-
-int imp_wcslen = 0x10BDF3B4;
-int imp_wcscpy = 0x10BDF39C;
-
-int get_uc_func_offset = 0x1090F6B0;
-
-//1093B590
-__declspec(naked) void test() {
-    __asm {
-        mov eax, 0x10C73BF0
-        mov eax, dword ptr[eax]
-        push esi
-        mov esi, [eax]
-        push 0x10C6F850
-        push edi
-
-        mov eax, dword ptr[imp_wcslen]
-        call[eax]
-
-        lea ecx, [eax + eax + 0x0E]
-        add esp, 0x04
-        push ecx
-        mov ecx, 0x10C73BF0
-        mov ecx, dword ptr[ecx]
-        call dword ptr[esi]
-        mov edx, [esp + 0x08]
-        mov ecx, [esp + 0x10]
-        mov esi, eax
-        mov eax, [esp + 0x0C]
-        mov[esi], edx
-        lea edx, [esi + 0x0C]
-        push edi
-        push edx
-        mov[esi + 0x04], eax
-        mov[esi + 0x08], ecx
-
-        mov eax, dword ptr[imp_wcscpy]
-        call[eax]
-        mov [addr], esi
-        mov eax, [esi]
-        mov [id], eax
-        mov eax, [esi+4]
-        mov[flags], eax
-        mov eax, [esi+8]
-        mov[unknown], eax
-        mov eax, esi
-        add eax, 0xc
-        mov [dummy4], eax
-
-        pushad
-
-        LEA eax, get_uc_func_offset
-        call [get_uc_func_offset]
-        and eax, 0x0FFF
-        mov[offs], eax
-        /*mov eax, [esi]
-        cmp eax, 0x13C2CD
-        jne skip1
-
-        int 3
-        skip1:*/
-    }
-    printTest();
-    //here
-    __asm{
-        popad
-        add esp, 0x08
-        mov eax, esi
-        pop esi
-        ret
-    }
-}
-
 void CodeCaves::Initialize()
 {
-    MemoryWriter::WriteJump(InstaFixPrototypeEntry, InstaFixPrototype);
+    MemoryWriter::WriteJump(InstaFixEntry, InstaFix);
     MemoryWriter::WriteJump(SetLvInEntry, SetLvIn);
     MemoryWriter::WriteJump(OnStateChangeEntry, OnStateChange);
 
     if (Config::disableStickyCamContextMenu) {
-        MemoryWriter::WriteJump(StickyCamContextMenuBlock3Entry, StickyCamContextMenuBlock3);
+        MemoryWriter::WriteJump(StickyCamContextMenuBlockEntry, StickyCamContextMenuBlock);
         
         uint8_t shortJump[] = { 0xEB };
         MemoryWriter::WriteBytes(0x10B2CE1B, shortJump, sizeof(shortJump));
