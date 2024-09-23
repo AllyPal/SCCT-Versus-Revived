@@ -18,7 +18,7 @@ class CodeCaves
 private:
 	
 public:
-	void Initialize();
+	static void Initialize();
 };
 
 struct PlC {
