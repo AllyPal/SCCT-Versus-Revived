@@ -13,6 +13,7 @@
 #include "logger.h"
 #include "CodeCaves.h"
 #include "Config.h"
+#include "GameConsole.h"
 
 INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
 
@@ -60,6 +61,9 @@ BOOL CALLBACK InitFunction(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
     Logger::log(L"applyAnimationFix: " + std::to_wstring(Config::applyAnimationFix));
     Logger::log(L"frameRateLimit_hosting:" + std::to_wstring(Config::frameRateLimit_hosting));
     Logger::log(L"frameRateLimit_client:" + std::to_wstring(Config::frameRateLimit_client));
+    
+    auto gameConsole = GameConsole();
+    gameConsole.Initialize();
 
     auto codeCaves = CodeCaves();
     codeCaves.Initialize();

@@ -87,6 +87,7 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="GameConsole.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="MemoryWriter.h" />
     <ClInclude Include="pch.h" />
@@ -96,6 +97,7 @@
     <ClCompile Include="CodeCaves.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="GameConsole.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

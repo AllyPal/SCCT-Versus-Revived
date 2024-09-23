@@ -16,216 +16,8 @@
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
-const double oneThousand = 1000.00f;
-const float oneHundred = 100.00f;
-const float one = 1.00f;
-const double zero = 0.00f;
-
 const int ToMilliseconds = 0x10B83AA0;
-const int timeBeginPeriodAddr = 0x10BDF53C;
-const int timeEndPeriodAddr = 0x10BDF538;
-const int sleep = 0x10BDF108;
 
-void PrintConsoleHelp();
-void PrintConsoleValues();
-
-static int thisConsole = 0;
-int setThisConsoleEntry = 0x10B0F15E;
-__declspec(naked) void setThisConsole() {
-    static int Return = 0x10B0F165;
-    __asm {
-        lea     eax, dword ptr[esi + 0x28]
-        mov[thisConsole], eax
-        mov     dword ptr[esi + 0x28], 0x10BF280C
-        jmp     dword ptr[Return]
-    }
-}
-
-static void WriteGameConsole(std::wstring message) {
-    static int WriteConsoleFunc = 0x109117A0;
-    if (!thisConsole) {
-        return;
-    }
-    const wchar_t* messagePtr = message.c_str();
-    __asm {
-        pushad
-        push messagePtr
-        mov ebx, dword ptr[thisConsole]
-        call dword ptr[WriteConsoleFunc]
-        popad
-    }
-    return;
-}
-
-struct CommandHandler {
-    std::wstring description;
-    std::function<void(const std::wstring&)> handler;
-    std::wstring displayValue;
-};
-
-std::map<std::wstring, CommandHandler> getCommandHandlers() {
-    std::map<std::wstring, CommandHandler> commandHandlers;
-
-    if (Config::mouseInputFix) {
-        commandHandlers[L"m_sens"] = {
-            std::format(L"<number> - mouse sensitivity during gameplay.", Config::baseMouseSensitivity),
-            [](const std::wstring& arg) {
-            if (!arg.empty()) {
-                Config::baseMouseSensitivity = std::stof(arg);
-            Config::Serialize();
-            }
-            WriteGameConsole(std::format(L" > m_sens {:.3f}", Config::baseMouseSensitivity));
-            },
-            std::format(L" m_sens {:.3f}", Config::baseMouseSensitivity)
-        };
-
-        commandHandlers[L"m_menu_sens"] = {
-            std::format(L"<number> - mouse sensitivity in menus.", Config::menuSensitivity),
-            [](const std::wstring& arg) {
-            if (!arg.empty()) {
-                Config::menuSensitivity = std::stof(arg);
-            Config::Serialize();
-            }
-            WriteGameConsole(std::format(L" > m_menu_sens {:.3f}", Config::menuSensitivity));
-            },
-            std::format(L" m_menu_sens {:.3f}", Config::menuSensitivity)
-        };
-    }
-
-    commandHandlers[L"d_fps_client"] = {
-        L"<number> - FPS whilst connected to servers.",
-        [](const std::wstring& arg) {
-        if (!arg.empty()) {
-            auto frameLimit = std::stoi(arg);
-            if (frameLimit < 30) {
-                frameLimit = 30;
-            }
-            Config::frameRateLimit_client = frameLimit;
-            Config::Serialize();
-        }
-        WriteGameConsole(std::format(L" > d_fps_client {}", Config::frameRateLimit_client));
-        },
-        std::format(L" d_fps_client {}", Config::frameRateLimit_client)
-    };
-
-    commandHandlers[L"d_fps_hosting"] = {
-        L"<number> - FPS whilst hosting.",
-        [](const std::wstring& arg) {
-        if (!arg.empty()) {
-            auto frameLimit = std::stoi(arg);
-            if (frameLimit < 30) {
-                frameLimit = 30;
-            }
-            Config::frameRateLimit_hosting = frameLimit;
-            Config::Serialize();
-        }
-        WriteGameConsole(std::format(L" > d_fps_hosting {}", Config::frameRateLimit_hosting));
-        },
-        std::format(L" d_fps_hosting {}", Config::frameRateLimit_hosting)
-    };
-
-    commandHandlers[L"quit"] = {
-        L"- Exits the game.",
-        [](const std::wstring& arg) {
-        exit(0);
-        }
-    };
-
-    commandHandlers[L"test1"] = {
-        L"- test1",
-        [](const std::wstring& arg) {
-            const uint8_t NOP = 0x90;
-            uint8_t nops[] = { NOP, NOP };
-            MemoryWriter::WriteBytes(0x10AA0535, nops, sizeof(nops));
-        }
-    };
-
-    commandHandlers[L"help"] = {
-        L"- Display command list.",
-        [](const std::wstring& arg) {
-            PrintConsoleHelp();
-        }
-    };
-
-    commandHandlers[L"current"] = {
-        L"- Display all current settings.",
-        [](const std::wstring& arg) {
-            PrintConsoleValues();
-        }
-    };
-    return commandHandlers;
-}
-
-void PrintConsoleValues() {
-    auto commandHandlers = getCommandHandlers();
-    for (const auto& [key, handler] : commandHandlers) {
-        if (!handler.displayValue.empty()) {
-            WriteGameConsole(handler.displayValue);
-        }
-    }
-}
-
-void PrintConsoleHelp() {
-    auto commandHandlers = getCommandHandlers();
-
-    for (const auto& [key, handler] : commandHandlers) {
-        WriteGameConsole(std::format(L" {} {}", key, handler.description));
-    }
-}
-
-void ProcessConsole(uintptr_t inputPtr) {
-    wchar_t* input = reinterpret_cast<wchar_t*>(inputPtr);
-    std::wcout << L"Input: " << input << std::endl;
-
-    std::wistringstream iss(input);
-    std::wstring command, arg;
-    iss >> command >> arg;
-
-    auto commandHandlers = getCommandHandlers();
-    if (commandHandlers.find(command) != commandHandlers.end()) {
-        try {
-            commandHandlers[command].handler(arg);
-        }
-        catch (...) {
-            WriteGameConsole(L"Unexpected input format.");
-        }
-    }
-}
-
-int ConsoleInputEntry = 0x10B0F639;
-__declspec(naked) void ConsoleInput() {
-    static int Return = 0x10B0F63E;
-    static uintptr_t inputPtr = 0;
-    __asm {
-        pushad
-        mov [inputPtr], esi
-    }
-    ProcessConsole(inputPtr);
-    __asm {
-        popad
-        push esi
-        lea eax, [edi - 0x2C]
-        push eax
-        jmp dword ptr[Return]
-    }
-}
-
-static std::string WStringToString(const std::wstring& wstr)
-{
-    if (wstr.empty()) return std::string();
-
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
-    std::string str(size_needed, 0);
-    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &str[0], size_needed, NULL, NULL);
-
-    return str;
-}
-
-static std::string toHexString(uintptr_t address) {
-    std::stringstream ss;
-    ss << "0x" << std::hex << std::uppercase << address;
-    return ss.str();
-}
 
 uintptr_t scriptNamePtr;
 void PrintUnrealScriptDebug() {
@@ -1381,6 +1173,7 @@ bool ValidateState(int newState) {
 
 int animatedTextureFixEntry = 0x109F2561;
 __declspec(naked) void animatedTextureFix() {
+    static float oneHundred = 100.00f;
     __asm {
         PUSH    ESI
 
@@ -1649,7 +1442,7 @@ __declspec(naked) void MenuMouseSensitivityX() {
 }
 
 bool __cdecl WriteBytes(uintptr_t targetAddress, const uint8_t* bytes, size_t length) {
-    Logger::log("Writing bytes at " + toHexString(targetAddress));
+    Logger::log("Writing bytes at " + StringOperations::toHexString(targetAddress));
 
     DWORD oldProtect;
     if (!VirtualProtect(reinterpret_cast<LPVOID>(targetAddress), length, PAGE_READWRITE, &oldProtect)) {
@@ -1664,12 +1457,12 @@ bool __cdecl WriteBytes(uintptr_t targetAddress, const uint8_t* bytes, size_t le
     }
 
     FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<LPCVOID>(targetAddress), length);
-    Logger::log("Finished writing bytes at " + toHexString(targetAddress));
+    Logger::log("Finished writing bytes at " + StringOperations::toHexString(targetAddress));
     return true;
 }
 
 bool __cdecl WriteJump(uintptr_t targetAddress, void(*function)()) {
-    Logger::log("Writing jump at " + toHexString(targetAddress));
+    Logger::log("Writing jump at " + StringOperations::toHexString(targetAddress));
     uintptr_t functionAddress = reinterpret_cast<uintptr_t>(function);
     uintptr_t relativeAddress = (functionAddress - targetAddress - 5);
     uint8_t jump[5];
@@ -1689,7 +1482,7 @@ bool __cdecl WriteJump(uintptr_t targetAddress, void(*function)()) {
     }
 
     FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<LPCVOID>(targetAddress), sizeof(jump));
-    Logger::log("Finished writing jump at " + toHexString(targetAddress));
+    Logger::log("Finished writing jump at " + StringOperations::toHexString(targetAddress));
     return true;
 }
 
@@ -1726,8 +1519,6 @@ void CodeCaves::Initialize()
     MemoryWriter::WriteJump(SetLvInEntry, SetLvIn);
     MemoryWriter::WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);
     MemoryWriter::WriteJump(OnStateChangeEntry, OnStateChange);
-    MemoryWriter::WriteJump(ConsoleInputEntry, ConsoleInput);
-    MemoryWriter::WriteJump(setThisConsoleEntry, setThisConsole);
 
     if (Config::mouseInputFix) {
         MemoryWriter::WriteJump(DisableMouseInputEntry, DisableMouseInput);
