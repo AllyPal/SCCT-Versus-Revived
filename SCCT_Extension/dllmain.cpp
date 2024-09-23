@@ -15,6 +15,7 @@
 #include "Config.h"
 #include "Input.h"
 #include "GameConsole.h"
+#include "Graphics.h"
 
 INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
 
@@ -63,6 +64,7 @@ BOOL CALLBACK InitFunction(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
     Logger::log(L"frameRateLimit_hosting:" + std::to_wstring(Config::frameRateLimit_hosting));
     Logger::log(L"frameRateLimit_client:" + std::to_wstring(Config::frameRateLimit_client));
     
+    Graphics::Initialize();
     GameConsole::Initialize();
     Input::Initialize();
     CodeCaves::Initialize();

@@ -1,0 +1,650 @@
+#include "pch.h"
+#include "Graphics.h"
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <dinput.h>
+#include "include/d3d8/d3d8.h"
+#include <format>
+#include <set>
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <timeapi.h>
+#include <Windows.h>
+#include "StringOperations.h"
+#include "MemoryWriter.h"
+#include "CodeCaves.h"
+#include "Input.h"
+
+#define D3DX_PI    (3.14159265358979323846)
+
+static D3DPRESENT_PARAMETERS* overriddenD3dpp;
+void ProcessDpp(D3DPRESENT_PARAMETERS* d3dpp) {
+    std::cout << "FullScreen_RefreshRateInHz: " << d3dpp->FullScreen_RefreshRateInHz << std::endl;
+    std::cout << "BackBufferWidth: " << d3dpp->BackBufferWidth << std::endl;
+    std::cout << "AutoDepthStencilFormat: " << d3dpp->AutoDepthStencilFormat << std::endl;
+    std::cout << "BackBufferCount: " << d3dpp->BackBufferCount << std::endl;
+    std::cout << "BackBufferFormat: " << d3dpp->BackBufferFormat << std::endl;
+    std::cout << "BackBufferHeight: " << d3dpp->BackBufferHeight << std::endl;
+    std::cout << "EnableAutoDepthStencil: " << d3dpp->EnableAutoDepthStencil << std::endl;
+    std::cout << "SwapEffect: " << d3dpp->SwapEffect << std::endl;
+    std::cout << "MultiSampleType: " << d3dpp->MultiSampleType << std::endl;
+    std::cout << "Flags: " << d3dpp->Flags << std::endl;
+
+    D3DPRESENT_PARAMETERS d3dppReplacement;
+    ZeroMemory(&d3dppReplacement, sizeof(d3dppReplacement));
+
+    d3dppReplacement.BackBufferWidth = d3dpp->BackBufferWidth;
+
+
+    overriddenD3dpp = &d3dppReplacement;
+}
+
+int D3DPPEntry = 0x1095CA7A;
+__declspec(naked) void D3DPP() {
+    static D3DPRESENT_PARAMETERS* d3dpp;
+    __asm {
+        add     eax, 0x46A8
+        mov dword ptr[d3dpp], eax
+        push    eax
+        pushad
+    }
+    ProcessDpp(d3dpp);
+    static int Return = 0x1095CA80;
+    __asm {
+        popad
+        jmp dword ptr[Return]
+    }
+}
+
+static LPDIRECT3DDEVICE8 pDevice;
+
+void DebugD3D() {
+    D3DCAPS8 caps;
+    HRESULT result = pDevice->GetDeviceCaps(&caps);
+    if (FAILED(result)) {
+        std::wcout << "DeviceCaps Failed" << std::endl;
+        return;
+    }
+    std::wcout << std::fixed << std::hex << "DeviceCaps" << std::endl;
+    std::wcout << std::fixed << std::hex << "DeviceType: " << caps.DeviceType << std::endl;
+    std::wcout << std::fixed << std::hex << "AdapterOrdinal: " << caps.AdapterOrdinal << std::endl;
+    std::wcout << std::fixed << std::hex << "Caps: " << caps.Caps << std::endl;
+    std::wcout << std::fixed << std::hex << "Caps2: " << caps.Caps2 << std::endl;
+    std::wcout << std::fixed << std::hex << "Caps3: " << caps.Caps3 << std::endl;
+    std::wcout << std::fixed << std::hex << "PresentationIntervals: " << caps.PresentationIntervals << std::endl;
+    std::wcout << std::fixed << std::hex << "CursorCaps: " << caps.CursorCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "DevCaps: " << caps.DevCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "PrimitiveMiscCaps: " << caps.PrimitiveMiscCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "RasterCaps: " << caps.RasterCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "ZCmpCaps: " << caps.ZCmpCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "SrcBlendCaps: " << caps.SrcBlendCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "DestBlendCaps: " << caps.DestBlendCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "AlphaCmpCaps: " << caps.AlphaCmpCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "ShadeCaps: " << caps.ShadeCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "TextureCaps: " << caps.TextureCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "TextureFilterCaps: " << caps.TextureFilterCaps << std::endl;          // D3DPTFILTERCAPS for IDirect3DTexture8's
+    std::wcout << std::fixed << std::hex << "CubeTextureFilterCaps: " << caps.CubeTextureFilterCaps << std::endl;      // D3DPTFILTERCAPS for IDirect3DCubeTexture8's
+    std::wcout << std::fixed << std::hex << "VolumeTextureFilterCaps: " << caps.VolumeTextureFilterCaps << std::endl;    // D3DPTFILTERCAPS for IDirect3DVolumeTexture8's
+    std::wcout << std::fixed << std::hex << "TextureAddressCaps: " << caps.TextureAddressCaps << std::endl;         // D3DPTADDRESSCAPS for IDirect3DTexture8's
+    std::wcout << std::fixed << std::hex << "VolumeTextureAddressCaps: " << caps.VolumeTextureAddressCaps << std::endl;   // D3DPTADDRESSCAPS for IDirect3DVolumeTexture8's
+    std::wcout << std::fixed << std::hex << "LineCaps: " << caps.LineCaps << std::endl;                   // D3DLINECAPS
+    std::wcout << std::fixed << std::hex << "MaxTextureWidth: " << caps.MaxTextureWidth << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxTextureHeight: " << caps.MaxTextureHeight << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVolumeExtent: " << caps.MaxVolumeExtent << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxTextureRepeat: " << caps.MaxTextureRepeat << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxTextureAspectRatio: " << caps.MaxTextureAspectRatio << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxAnisotropy: " << caps.MaxAnisotropy << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVertexW: " << caps.MaxVertexW << std::endl;
+    std::wcout << std::fixed << std::hex << "GuardBandLeft: " << caps.GuardBandLeft << std::endl;
+    std::wcout << std::fixed << std::hex << "GuardBandTop: " << caps.GuardBandTop << std::endl;
+    std::wcout << std::fixed << std::hex << "GuardBandRight: " << caps.GuardBandRight << std::endl;
+    std::wcout << std::fixed << std::hex << "GuardBandBottom: " << caps.GuardBandBottom << std::endl;
+    std::wcout << std::fixed << std::hex << "ExtentsAdjust: " << caps.ExtentsAdjust << std::endl;
+    std::wcout << std::fixed << std::hex << "StencilCaps: " << caps.StencilCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "FVFCaps: " << caps.FVFCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "TextureOpCaps: " << caps.TextureOpCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxTextureBlendStages: " << caps.MaxTextureBlendStages << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxSimultaneousTextures: " << caps.MaxSimultaneousTextures << std::endl;
+    std::wcout << std::fixed << std::hex << "VertexProcessingCaps: " << caps.VertexProcessingCaps << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxActiveLights: " << caps.MaxActiveLights << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxUserClipPlanes: " << caps.MaxUserClipPlanes << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVertexBlendMatrices: " << caps.MaxVertexBlendMatrices << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVertexBlendMatrixIndex: " << caps.MaxVertexBlendMatrixIndex << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxPointSize: " << caps.MaxPointSize << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxPrimitiveCount: " << caps.MaxPrimitiveCount << std::endl;          // max number of primitives per DrawPrimitive call
+    std::wcout << std::fixed << std::hex << "MaxVertexIndex: " << caps.MaxVertexIndex << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxStreams: " << caps.MaxStreams << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxStreamStride: " << caps.MaxStreamStride << std::endl;            // max stride for SetStreamSource
+    std::wcout << std::fixed << std::hex << "VertexShaderVersion: " << caps.VertexShaderVersion << std::endl;
+    std::wcout << std::fixed << std::hex << "MaxVertexShaderConst: " << caps.MaxVertexShaderConst << std::endl;       // number of vertex shader constant registers
+    std::wcout << std::fixed << std::hex << "PixelShaderVersion: " << caps.PixelShaderVersion << std::endl;
+
+    if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 0))
+    {
+        int majorVersion = D3DSHADER_VERSION_MAJOR(caps.PixelShaderVersion);
+        int minorVersion = D3DSHADER_VERSION_MINOR(caps.PixelShaderVersion);
+        std::wcout << std::fixed << std::hex << "PixelShaderVersion_Major: " << majorVersion << std::endl;
+        std::wcout << std::fixed << std::hex << "PixelShaderVersion_Minor: " << minorVersion << std::endl;
+
+    }
+
+    std::wcout << std::fixed << std::hex << "MaxPixelShaderValue: " << caps.MaxPixelShaderValue << std::endl;
+}
+
+bool initialized = false;
+void OnDeviceCreated() {
+    if (!initialized) {
+        CodeCaves::EnableProcessSecurity();
+        initialized = true;
+    }
+}
+
+int DeviceEntry = 0x1095CAAA;
+__declspec(naked) void Device() {
+    static int Return = 0x1095CAB2;
+    __asm {
+        mov     eax, [ecx + 0x46A4]
+        mov     edx, [eax]
+        pushad
+        mov[pDevice], eax
+    }
+    OnDeviceCreated();
+    __asm {
+        popad
+        jmp     dword ptr[Return]
+    }
+}
+void D3DMatrixIdentity(D3DMATRIX* pOut)
+{
+    // Zero out the matrix
+    std::memset(pOut, 0, sizeof(D3DMATRIX));
+
+    // Set the diagonal to 1
+    pOut->m[0][0] = 1.0f;
+    pOut->m[1][1] = 1.0f;
+    pOut->m[2][2] = 1.0f;
+    pOut->m[3][3] = 1.0f;
+}
+
+D3DMATRIX* D3DXMatrixPerspectiveFovLH(D3DMATRIX* pOut, float fovy, float aspect, float zn, float zf)
+{
+    D3DMatrixIdentity(pOut);
+
+    float tanHalfFovy = tanf(fovy / 2.0f);
+    pOut->m[0][0] = 1.0f / (aspect * tanHalfFovy);
+    pOut->m[1][1] = 1.0f / tanHalfFovy;
+    pOut->m[2][2] = zf / (zf - zn);
+    pOut->m[2][3] = 1.0f;
+    pOut->m[3][2] = (zf * zn) / (zn - zf);
+    pOut->m[3][3] = 0.0f;
+
+    return pOut;
+}
+
+float RadToDeg(float radians) {
+    return radians * (180.0f / D3DX_PI);
+}
+
+float DegreesToRadians(float degrees)
+{
+    return degrees * (D3DX_PI / 180.0f);
+}
+
+static float GetOriginalFovY(float m11) {
+    return 2.0f * atanf(1.0f / m11);
+}
+
+static void ApplyMatrixPerspectiveFovLH(D3DMATRIX* projMatrix, float displayWidth, float displayHeight)
+{
+    float fovY = GetOriginalFovY(projMatrix->m[1][1]);// DegreesToRadians(57.0f);
+    /*auto ogFov = RadToDeg(fovY);
+    std::cout << std::format("ogfov:  {:.2f}", ogFov) << std::endl;*/
+    float aspectRatio = displayWidth / displayHeight; // Example resolution
+    float nearClip = 0.1f;// 1.0f;
+    float farClip = 50000.0f;
+
+    D3DXMatrixPerspectiveFovLH(projMatrix, fovY, aspectRatio, nearClip, farClip);
+}
+
+void ApplyWidthScaling(D3DMATRIX* projMatrix, float aspectRatio)
+{
+    if ((projMatrix->_11 < 0.0f) ^ (projMatrix->_22 < 0.0f)) {
+        projMatrix->_22 = projMatrix->_11 * aspectRatio;
+        projMatrix->_22 *= -1;
+    }
+    else {
+        projMatrix->_22 = projMatrix->_11 * aspectRatio;
+    }
+}
+
+void ApplyWidthScaling(D3DMATRIX* projMatrix, float displayHeight, float displayWidth)
+{
+    ApplyWidthScaling(projMatrix, displayWidth / displayHeight);
+}
+
+void ApplyHeightScaling(D3DMATRIX* projMatrix, D3DDISPLAYMODE& d3dDisplayMode)
+{
+    if ((projMatrix->_11 < 0.0f) ^ (projMatrix->_22 < 0.0f)) {
+        projMatrix->_11 = (projMatrix->_22 / d3dDisplayMode.Width) * d3dDisplayMode.Height;
+        projMatrix->_11 *= -1;
+    }
+    else {
+        projMatrix->_11 = (projMatrix->_22 / d3dDisplayMode.Width) * d3dDisplayMode.Height;
+    }
+}
+
+static bool renderingHudMenu = false;
+int startRenderMenuEntry = 0x10A0FDC0;
+__declspec(naked) void startHudMenuRender() {
+    static int Return = 0x10A0FDC6;
+    __asm {
+        mov dword ptr[renderingHudMenu], 1
+        mov     eax, [esi + 0x28]
+        mov     ecx, [eax + 0x30]
+        jmp     dword ptr[Return]
+    }
+}
+int endRenderMenuEntry = 0x10A0FE4B;
+__declspec(naked) void endHudMenuRender() {
+    __asm {
+        mov dword ptr[renderingHudMenu], 0
+        retn    4
+    }
+}
+
+static bool isMercEnhancedRealityStationary = 0;
+
+static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
+{
+    D3DDISPLAYMODE d3dDisplayMode;
+    pDevice->GetDisplayMode(&d3dDisplayMode);
+
+    float displayHeight = static_cast<float>(d3dDisplayMode.Height);
+    float displayWidth = static_cast<float>(d3dDisplayMode.Width);
+    displayWidth = min(displayWidth, d3dDisplayMode.Height * (16.0f / 9.0));
+    //float displayAspectRatio = displayHeight/ displayWidth;
+    auto renderAspectRatio = fabs(roundf((projMatrix->_11 / projMatrix->_22) * 100.0f) / 100.0f);
+    const float fourByThreeAspect = 0.75f;
+    if (renderAspectRatio == fourByThreeAspect) {
+        /*std::string message = std::format("deg:  {:.2f}", RadToDeg(originalFov);
+        std::cout << message << std::endl;*/
+        if (fabs(projMatrix->_22) < 0.1f) {
+            if (renderingHudMenu) {
+                return;
+            }
+
+            auto newAspect = (displayWidth / displayHeight);
+            ApplyWidthScaling(projMatrix, newAspect);
+
+            projMatrix->_42 = (projMatrix->_42 / (4.0 / 3)) * newAspect;
+            return;
+        }
+
+        int scalingMode = 0;
+
+        switch (scalingMode) {
+        default:
+            ApplyWidthScaling(projMatrix, displayHeight, displayWidth);
+            break;
+        case 1:
+            ApplyMatrixPerspectiveFovLH(projMatrix, displayWidth, displayHeight);
+            break;
+        case 2:
+            ApplyHeightScaling(projMatrix, d3dDisplayMode);
+            break;
+        }
+    }
+}
+int SetProjection1Entry = 0x1096CA07;
+__declspec(naked) void SetProjection1() {
+    static D3DMATRIX* projMatrix;
+    static int Return = 0x1096CA0D;
+    __asm {
+        pushad
+        mov     dword ptr[projMatrix], ebp
+    }
+    SetupProjectionMatrix(projMatrix);
+
+    __asm {
+        popad
+        call    dword ptr[ecx + 0x94]
+        jmp     dword ptr[Return]
+    }
+}
+
+int SetProjection2Entry = 0x1097827B;
+__declspec(naked) void SetProjection2() {
+    static D3DMATRIX* projMatrix;
+    static int Return = 0x10978281;
+    __asm {
+        pushad
+        mov     dword ptr[projMatrix], edx
+    }
+    SetupProjectionMatrix(projMatrix);
+
+    __asm {
+        popad
+        call    dword ptr[ecx + 0x94]
+        jmp     dword ptr[Return]
+    }
+}
+
+int SetProjection3Entry = 0x1096BC07;
+__declspec(naked) void SetProjection3() {
+    static D3DMATRIX* projMatrix;
+    static int Return = 0x1096BC0D;
+    __asm {
+        pushad
+        mov eax, dword ptr[0x10CC9560]
+        mov     dword ptr[projMatrix], eax
+    }
+    SetupProjectionMatrix(projMatrix);
+
+    __asm {
+        popad
+        call    dword ptr[ecx + 0x94]
+        jmp     dword ptr[Return]
+    }
+}
+
+static int removeClientFpsCapEntry = 0x1090801C;
+__declspec(naked) void removeClientFpsCap() {
+    static int Return = 0x10908063;
+    __asm {
+        jmp dword ptr[Return]
+    }
+}
+
+std::chrono::steady_clock::time_point nextFrameTime;
+std::chrono::steady_clock::time_point lastFrameTime;
+void UpdateLastFrameRenderedTime() {
+    double frameRateLimit;
+    if (CodeCaves::IsListenServer()) {
+        frameRateLimit = (double)Config::frameRateLimit_hosting;
+    }
+    else {
+        frameRateLimit = (double)Config::frameRateLimit_client;
+    }
+    double frameTimeSeconds = (double)1.0 / frameRateLimit;
+    auto frameTimeNanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::duration<double>((double)1.0 / frameRateLimit)
+    ).count();
+
+    lastFrameTime = nextFrameTime;
+    nextFrameTime = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(frameTimeNanoseconds);
+}
+
+void preciseSpin() {
+    while (std::chrono::high_resolution_clock::now() < nextFrameTime) {
+    }
+}
+
+void preciseSleep() {
+    auto remainingFrameTime = nextFrameTime - std::chrono::high_resolution_clock::now();
+    auto remainingMS = std::chrono::duration<double, std::milli>(remainingFrameTime).count();
+    if (remainingMS - std::floor(remainingMS) >= 0.5) {
+        remainingMS = std::floor(remainingMS);
+    }
+    else {
+        remainingMS = std::floor(remainingMS) - 1;
+    }
+    if (remainingMS > 0) {
+        timeBeginPeriod(1);
+        Sleep(static_cast<DWORD>(remainingMS));
+        timeEndPeriod(1);
+    }
+
+    preciseSpin();
+}
+
+void LimitFrameRate() {
+    switch (Config::frameTimingMode) {
+    default:
+        preciseSpin();
+        break;
+    case 1:
+        preciseSleep();
+        break;
+    }
+
+    UpdateLastFrameRenderedTime();
+}
+
+double ConvertFOV(double horizontalFOV, double newAspectRatio) {
+    double horizontalFOVRad = horizontalFOV * D3DX_PI / 180.0;
+    double originalAspectRatioWidth = 4.0;
+    double originalAspectRatioHeight = 3.0;
+    double verticalFOVRad = 2 * atan(tan(horizontalFOVRad / 2) * originalAspectRatioHeight / originalAspectRatioWidth);
+    double verticalFOV = verticalFOVRad * 180.0 / D3DX_PI;
+    double newAspectRatioWidth = newAspectRatio;
+    double newHorizontalFOVRad = 2 * atan(tan(verticalFOVRad / 2) * newAspectRatioWidth);
+    double newHorizontalFOV = newHorizontalFOVRad * 180.0 / D3DX_PI;
+
+    return min(newHorizontalFOV, Config::widescreenFovCap);
+}
+
+float displayHeightLast = 0;
+float displayWidthLast = 0;
+float originalSfv = 0.0;
+float originalDfv = 0.0;
+float hSfv = 0.0;
+float hDfv = 0.0;
+void WidescreenViewFix() {
+    if (CodeCaves::lvIn != NULL && CodeCaves::lvIn->lPlC() != NULL && pDevice != NULL) {
+        // Copy/pasted.  TODO: Refactor
+        D3DDISPLAYMODE d3dDisplayMode;
+        pDevice->GetDisplayMode(&d3dDisplayMode);
+        float defv = CodeCaves::lvIn->lPlC()->Defv();
+        float displayHeight = static_cast<float>(d3dDisplayMode.Height);
+        float displayWidth = static_cast<float>(d3dDisplayMode.Width);
+        displayWidth = min(displayWidth, d3dDisplayMode.Height * (16.0f / 9.0));
+
+        if (displayWidthLast != displayWidth || displayHeightLast != displayHeight || (defv != hSfv && defv != hDfv)) {
+            if (originalSfv == 0.0) {
+                originalSfv = CodeCaves::lvIn->lPlC()->Sfv();
+                originalDfv = CodeCaves::lvIn->lPlC()->Dfv();
+            }
+
+            bool wasSfv = CodeCaves::lvIn->lPlC()->Defv() == hSfv;
+            bool wasDfv = CodeCaves::lvIn->lPlC()->Defv() == hDfv;
+
+            auto aspectRatio = displayWidth / displayHeight;
+            Input::aspectRatioMenuVertMouseInputMultiplier = aspectRatio / (4.0 / 3.0);
+            hSfv = ConvertFOV(originalSfv, aspectRatio);
+            hDfv = ConvertFOV(originalDfv, aspectRatio);
+
+            if (wasSfv) {
+                CodeCaves::lvIn->lPlC()->Defv() = hSfv;
+            }
+            else if (wasDfv) {
+                CodeCaves::lvIn->lPlC()->Defv() = hDfv;
+            }
+
+            // last calculated
+            displayHeightLast = displayHeight;
+            displayWidthLast = displayWidth;
+        }
+
+        CodeCaves::lvIn->lPlC()->Sfv() = hSfv;
+        CodeCaves::lvIn->lPlC()->Dfv() = hDfv;
+    }
+}
+
+int viewFixEntry = 0x1095E417;
+int viewFix2Entry = 0x1095E43C;
+__declspec(naked) void viewFix() {
+    __asm {
+        pushad
+    }
+    WidescreenViewFix();
+    __asm {
+        popad
+        add     esp, 0x14
+        retn    0x4
+    }
+}
+
+int alternativeFrameModeEntry = 0x109EC82F;
+__declspec(naked) void alternativeFrameMode() {
+    __asm {
+        pushad
+    }
+    LimitFrameRate();
+    __asm {
+        popad
+        retn    0x10
+    }
+}
+
+
+int startFrameTimerEntry = 0x1095E331;
+__declspec(naked) void beforePresent() {
+    static int Return = 0x1095E38D;
+    __asm {
+        mov edx, [esp + 00]
+        jmp dword ptr[Return]
+    }
+
+}
+
+// TODO: Remove this approach. Inferior to the others
+//int fixSleepTimerEntry = 0x1095E340;
+//const int fixSleepTimerReturn = 0x1095E38D;
+//__declspec(naked) void fixSleepTimer() {
+//    static int frameRateLimit;
+//    __asm {
+//        pushad
+//    }
+//    if (IsListenServer()) {
+//        frameRateLimit = Config::frameRateLimit_hosting;
+//    }
+//    else {
+//        frameRateLimit = Config::frameRateLimit_client;
+//    }
+//    __asm {
+//        popad
+//        mov     eax, dword ptr[frameRateLimit]
+//        fild    dword ptr[frameRateLimit]
+//        test    eax, eax
+//        jge     loc_1095E356
+//        mov     eax, 0x10C10A24
+//        fadd    dword ptr[eax]
+//        loc_1095E356:
+//        fdivr dword ptr[one]
+//        fld     st(1)
+//        fcomp   st(1)
+//        fnstsw  ax
+//        test    ah, 0x05
+//        jp      loc_1095E389
+//        fsub    st(0), st(1)
+//        fmul    qword ptr[oneThousand]
+//        call    dword ptr[ToMilliseconds]
+//        fstp    st(0)
+//        push    eax
+//
+//        push    0x1
+//        mov     eax, dword ptr[timeBeginPeriodAddr]
+//        call    dword ptr[eax]
+//
+//        mov     eax, dword ptr[sleep]
+//        call    dword ptr[eax]
+//
+//        push    0x1
+//        mov     eax, dword ptr[timeEndPeriodAddr]
+//        call    dword ptr[eax]
+//
+//        mov     edx, [esp + 00]
+//        jmp     fixSleepTimerEnd
+//
+//        loc_1095E389 :
+//        fstp    st(0)
+//        fstp    st(0)
+//
+//        fixSleepTimerEnd :
+//        jmp     dword ptr[fixSleepTimerReturn]
+//    }
+//}
+
+int animatedTextureFixEntry = 0x109F2561;
+__declspec(naked) void animatedTextureFix() {
+    static float oneHundred = 100.00f;
+    static int ToMilliseconds = 0x10B83AA0;
+    __asm {
+        PUSH    ESI
+
+        MOV     ESI, 0x10CCADA0 // not precise
+        FLD     QWORD PTR[ESI]
+
+        FMUL    dword ptr[oneHundred]
+        CALL    dword ptr[ToMilliseconds]
+        POP     ESI
+
+        test    eax, eax
+        jz skipCheck
+
+        // abusing this offset.  It's not used unless a FPS cap is specified on the animated texture
+        cmp     dword ptr[esi + 0x0000008C], eax
+        jg      skipTextureRender
+
+        skipCheck :
+
+        add     eax, 3 // 3 100ths of a second
+            mov     dword ptr[esi + 0x0000008C], eax
+
+            mov     edx, [esi]
+            mov     ecx, esi
+            call    dword ptr[edx + 0x000000A4]
+
+            skipTextureRender:
+        pop     esi
+            add     esp, 0x08
+            ret     0004
+    }
+}
+
+static int ScctEnhancedIdentifier = 0x10C42DA4;
+static int AddEnhancedGuiResolutionsEntry = 0x10B0FC5E;
+__declspec(naked) void AddEnhancedGuiResolutions() {
+    static int Return = 0x10B0FC64;
+    __asm {
+        push eax
+        mov eax, dword ptr[ScctEnhancedIdentifier]
+        mov al, byte ptr[eax]
+        cmp al, '3'
+        jne notEnhanced
+
+        pop eax
+        push 13 // resolution count
+
+        notEnhanced:
+        push 0x10C42C74
+            jmp dword ptr[Return]
+    }
+}
+
+void Graphics::Initialize()
+{
+    if (Config::applyAnimationFix)
+        MemoryWriter::WriteJump(animatedTextureFixEntry, animatedTextureFix);
+
+    MemoryWriter::WriteJump(startFrameTimerEntry, beforePresent);
+    MemoryWriter::WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
+    MemoryWriter::WriteJump(removeClientFpsCapEntry, removeClientFpsCap);
+    MemoryWriter::WriteJump(DeviceEntry, Device);
+
+    if (Config::widescreenAspectRatioFix) {
+        MemoryWriter::WriteJump(SetProjection1Entry, SetProjection1);
+        MemoryWriter::WriteJump(SetProjection2Entry, SetProjection2);
+        MemoryWriter::WriteJump(SetProjection3Entry, SetProjection3);
+
+        MemoryWriter::WriteJump(viewFixEntry, viewFix);
+        MemoryWriter::WriteJump(viewFix2Entry, viewFix);
+
+        MemoryWriter::WriteJump(startRenderMenuEntry, startHudMenuRender);
+        MemoryWriter::WriteJump(endRenderMenuEntry, endHudMenuRender);
+    }
+
+    MemoryWriter::WriteJump(D3DPPEntry, D3DPP);
+    MemoryWriter::WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);
+}
