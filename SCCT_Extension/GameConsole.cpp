@@ -54,7 +54,7 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
     std::map<std::wstring, CommandHandler> commandHandlers;
 
     if (Config::mouseInputFix) {
-        commandHandlers[L"m_sens"] = {
+        commandHandlers[L"sens"] = {
             std::format(L"<number> - mouse sensitivity during gameplay.", Config::baseMouseSensitivity),
             [](const std::wstring& arg) {
             if (!arg.empty()) {
@@ -66,7 +66,7 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
             std::format(L" m_sens {:.3f}", Config::baseMouseSensitivity)
         };
 
-        commandHandlers[L"m_menu_sens"] = {
+        commandHandlers[L"sens_menu"] = {
             std::format(L"<number> - mouse sensitivity in menus.", Config::menuSensitivity),
             [](const std::wstring& arg) {
             if (!arg.empty()) {
@@ -79,7 +79,7 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
         };
     }
 
-    commandHandlers[L"d_fps_client"] = {
+    commandHandlers[L"fps_client"] = {
         L"<number> - FPS whilst connected to servers.",
         [](const std::wstring& arg) {
         if (!arg.empty()) {
@@ -95,7 +95,7 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
         std::format(L" d_fps_client {}", Config::frameRateLimit_client)
     };
 
-    commandHandlers[L"d_fps_hosting"] = {
+    commandHandlers[L"fps_host"] = {
         L"<number> - FPS whilst hosting.",
         [](const std::wstring& arg) {
         if (!arg.empty()) {
