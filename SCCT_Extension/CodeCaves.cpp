@@ -1,9 +1,5 @@
 #include "pch.h"
 #include "CodeCaves.h"
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <dinput.h>
-#include "include/d3d8/d3d8.h"
 #include <format>
 #include <set>
 #include <iostream>
@@ -15,8 +11,6 @@
 #include "MemoryWriter.h"
 #include "Input.h"
 #include "GameStructs.h"
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "winmm.lib")
 
 LvIn* CodeCaves::lvIn = nullptr;
 int SetLvInEntry = 0x109ADFB3;

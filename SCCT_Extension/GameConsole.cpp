@@ -15,6 +15,7 @@
 #include "MemoryWriter.h"
 #include <functional>
 #include <map>
+#include <algorithm>
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
@@ -166,7 +167,7 @@ void ProcessConsole(uintptr_t inputPtr) {
     std::wistringstream iss(input);
     std::wstring command, arg;
     iss >> command >> arg;
-
+    std::transform(command.begin(), command.end(), command.begin(), ::towlower);
     auto commandHandlers = getCommandHandlers();
     if (commandHandlers.find(command) != commandHandlers.end()) {
         try {

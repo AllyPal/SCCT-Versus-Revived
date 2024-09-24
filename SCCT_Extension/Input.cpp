@@ -3,7 +3,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <dinput.h>
-#include "include/d3d8/d3d8.h"
 #include <format>
 #include <set>
 #include <iostream>
@@ -14,8 +13,6 @@
 #include "StringOperations.h"
 #include "MemoryWriter.h"
 #include "Config.h"
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "winmm.lib")
 
 static int xMouseDelta = 0;
 static int yMouseDelta = 0;

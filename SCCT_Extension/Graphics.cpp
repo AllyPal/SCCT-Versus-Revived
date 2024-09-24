@@ -253,8 +253,6 @@ __declspec(naked) void endHudMenuRender() {
     }
 }
 
-static bool isMercEnhancedRealityStationary = 0;
-
 static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
 {
     D3DDISPLAYMODE d3dDisplayMode;
