@@ -69,7 +69,7 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
     if (Config::forceMaxRefreshRate) {
         auto refreshRate = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
         if (refreshRate != 0) {
-            d3dppReplacement.FullScreen_RefreshRateInHz = 165;
+            d3dppReplacement.FullScreen_RefreshRateInHz = refreshRate;
         }
     }
     overriddenD3dpp = &d3dppReplacement;
