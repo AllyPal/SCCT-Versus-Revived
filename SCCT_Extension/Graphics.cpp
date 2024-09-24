@@ -18,8 +18,40 @@
 
 #define D3DX_PI    (3.14159265358979323846)
 
+static IDirect3D8* d3d;
+static LPDIRECT3DDEVICE8 pDevice;
+
+int D3DCreateResultEntry = 0x1095B986;
+__declspec(naked) void D3DCreateResult() {
+    static int Return = 0x1095B98C;
+    __asm {
+        mov[ebp + 0x46A0], eax
+        mov[d3d], eax
+        jmp dword ptr[Return]
+    }
+}
+
+int GetMaxRefreshRate(UINT displayWidth, UINT displayHeight) {
+    D3DDISPLAYMODE displayMode;
+    UINT maxRefreshRate = 0;
+
+    for (UINT i = 0; i < d3d->GetAdapterCount(); i++) {
+        for (UINT j = 0; j < d3d->GetAdapterModeCount(i); j++) {
+            if (SUCCEEDED(d3d->EnumAdapterModes(i, j, &displayMode))) {
+                if (displayMode.Width == displayWidth && displayMode.Height == displayHeight) {
+                    if (displayMode.RefreshRate > maxRefreshRate) {
+                        maxRefreshRate = displayMode.RefreshRate;
+                    }
+                }
+            }
+        }
+    }
+    return maxRefreshRate;
+}
+
+static D3DPRESENT_PARAMETERS d3dppReplacement;
 static D3DPRESENT_PARAMETERS* overriddenD3dpp;
-void ProcessDpp(D3DPRESENT_PARAMETERS* d3dpp) {
+void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
     std::cout << "FullScreen_RefreshRateInHz: " << d3dpp->FullScreen_RefreshRateInHz << std::endl;
     std::cout << "BackBufferWidth: " << d3dpp->BackBufferWidth << std::endl;
     std::cout << "AutoDepthStencilFormat: " << d3dpp->AutoDepthStencilFormat << std::endl;
@@ -31,12 +63,15 @@ void ProcessDpp(D3DPRESENT_PARAMETERS* d3dpp) {
     std::cout << "MultiSampleType: " << d3dpp->MultiSampleType << std::endl;
     std::cout << "Flags: " << d3dpp->Flags << std::endl;
 
-    D3DPRESENT_PARAMETERS d3dppReplacement;
     ZeroMemory(&d3dppReplacement, sizeof(d3dppReplacement));
+    d3dppReplacement = *d3dpp;
 
-    d3dppReplacement.BackBufferWidth = d3dpp->BackBufferWidth;
-
-
+    if (Config::forceMaxRefreshRate) {
+        auto refreshRate = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
+        if (refreshRate != 0) {
+            d3dppReplacement.FullScreen_RefreshRateInHz = 165;
+        }
+    }
     overriddenD3dpp = &d3dppReplacement;
 }
 
@@ -49,7 +84,7 @@ __declspec(naked) void D3DPP() {
         push    eax
         pushad
     }
-    ProcessDpp(d3dpp);
+    ProcessD3DPresentParameters(d3dpp);
     static int Return = 0x1095CA80;
     __asm {
         popad
@@ -57,15 +92,8 @@ __declspec(naked) void D3DPP() {
     }
 }
 
-static LPDIRECT3DDEVICE8 pDevice;
 
-void DebugD3D() {
-    D3DCAPS8 caps;
-    HRESULT result = pDevice->GetDeviceCaps(&caps);
-    if (FAILED(result)) {
-        std::wcout << "DeviceCaps Failed" << std::endl;
-        return;
-    }
+void PrintD3DCAPS8(D3DCAPS8 caps) {
     std::wcout << std::fixed << std::hex << "DeviceCaps" << std::endl;
     std::wcout << std::fixed << std::hex << "DeviceType: " << caps.DeviceType << std::endl;
     std::wcout << std::fixed << std::hex << "AdapterOrdinal: " << caps.AdapterOrdinal << std::endl;
@@ -132,6 +160,29 @@ void DebugD3D() {
     std::wcout << std::fixed << std::hex << "MaxPixelShaderValue: " << caps.MaxPixelShaderValue << std::endl;
 }
 
+int D3D8CapsEntry = 0x1095BA7B;
+__declspec(naked) void D3D8Caps() {
+    static int Return = 0x1095BA93;
+    static D3DCAPS8* caps;
+    __asm {
+        lea edx, [ebp + 0x0000413C]
+        mov [caps], edx
+        push edx
+        mov edx, [ebp + 0x00004678]
+        mov edi, 0x00000001
+        push edi
+        push edx
+        push eax
+        call dword ptr[ecx + 0x34]
+        pushad
+    }
+    PrintD3DCAPS8(*caps);
+    __asm {
+        popad
+        jmp dword ptr[Return]
+    }
+}
+
 bool initialized = false;
 void OnDeviceCreated() {
     if (!initialized) {
@@ -140,10 +191,41 @@ void OnDeviceCreated() {
     }
 }
 
-int DeviceEntry = 0x1095CAAA;
-__declspec(naked) void Device() {
+int CreateDeviceEntry = 0x1095CA73;
+__declspec(naked) void CreateDevice() {
     static int Return = 0x1095CAB2;
+    static int Fail = 0x1095D9B3;
+    static D3DPRESENT_PARAMETERS* d3dpp;
     __asm {
+        lea edx, [eax + 0x000046A4]
+        push edx
+        add     eax, 0x46A8
+        mov dword ptr[d3dpp], eax
+        pushad
+    }
+    ProcessD3DPresentParameters(d3dpp);
+    __asm {
+        popad
+        mov eax, dword ptr[overriddenD3dpp]
+        push eax
+
+        mov eax, [ecx]
+        push edi // 0x42
+        call dword ptr[eax + 0x000000B4]
+        mov ecx, [esp + 0x2C]
+        mov edx, [esp + 0x18]
+        push eax
+        mov eax, [edx + 0x00004678]
+        push ecx // hal
+        push eax
+        push esi
+        call dword ptr[ebx + 0x3C]
+        test eax, eax
+        je success
+        jmp dword ptr[Fail]
+        success:
+
+        mov ecx, [esp + 0x0C]
         mov     eax, [ecx + 0x46A4]
         mov     edx, [eax]
         pushad
@@ -155,6 +237,7 @@ __declspec(naked) void Device() {
         jmp     dword ptr[Return]
     }
 }
+
 void D3DMatrixIdentity(D3DMATRIX* pOut)
 {
     // Zero out the matrix
@@ -629,7 +712,9 @@ void Graphics::Initialize()
     MemoryWriter::WriteJump(startFrameTimerEntry, beforePresent);
     MemoryWriter::WriteJump(alternativeFrameModeEntry, alternativeFrameMode);
     MemoryWriter::WriteJump(removeClientFpsCapEntry, removeClientFpsCap);
-    MemoryWriter::WriteJump(DeviceEntry, Device);
+    MemoryWriter::WriteJump(CreateDeviceEntry, CreateDevice);
+    MemoryWriter::WriteJump(D3D8CapsEntry, D3D8Caps);
+    MemoryWriter::WriteJump(D3DCreateResultEntry, D3DCreateResult);
 
     if (Config::widescreenAspectRatioFix) {
         MemoryWriter::WriteJump(SetProjection1Entry, SetProjection1);

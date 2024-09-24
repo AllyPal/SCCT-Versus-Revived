@@ -72,8 +72,6 @@ void CodeCaves::EnableProcessSecurity()
     }
 }
 
-
-
 bool ValidateState(int newState) {
     bool result = true;
     __asm {

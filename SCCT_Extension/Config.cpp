@@ -12,6 +12,7 @@ int Config::frameTimingMode;
 bool Config::applyAnimationFix;
 bool Config::widescreenAspectRatioFix;
 float Config::widescreenFovCap;
+bool Config::forceMaxRefreshRate;
 
 bool Config::useDirectConnect;
 std::wstring Config::directConnectIp;
@@ -33,6 +34,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     applyAnimationFix = true;
     widescreenAspectRatioFix = true;
     widescreenFovCap = 105.0;
+    forceMaxRefreshRate = true;
     useDirectConnect = false;
     directConnectIp = L"";
     directConnectPort = L"";
@@ -56,6 +58,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
             widescreenAspectRatioFix = jsonConfig.value("widescreenAspectRatioFix", true);
             widescreenFovCap = jsonConfig.value("widescreenFovCap", 105.0);
+            forceMaxRefreshRate = jsonConfig.value("forceMaxRefreshRate", true);
             mouseInputFix = jsonConfig.value("mouseInputFix", true);
             menuSensitivity = jsonConfig.value("menuSensitivity", 0.25);
             baseMouseSensitivity = jsonConfig.value("baseMouseSensitivity", 1.0);
@@ -131,6 +134,7 @@ bool Config::Serialize() {
             jsonConfig["baseMouseSensitivity"] = baseMouseSensitivity;
             jsonConfig["widescreenAspectRatioFix"] = widescreenAspectRatioFix;
             jsonConfig["widescreenFovCap"] = widescreenFovCap;
+            jsonConfig["forceMaxRefreshRate"] = forceMaxRefreshRate;
             jsonConfig["serverList"] = serverList;
             jsonConfig["security_acg"] = security_acg;
             jsonConfig["security_dep"] = security_dep;
