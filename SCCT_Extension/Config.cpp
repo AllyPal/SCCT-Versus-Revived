@@ -14,6 +14,7 @@ bool Config::fixFlashlight;
 bool Config::widescreenAspectRatioFix;
 float Config::widescreenFovCap;
 bool Config::forceMaxRefreshRate;
+bool Config::labs_borderlessFullscreen;
 
 bool Config::useDirectConnect;
 std::wstring Config::directConnectIp;
@@ -37,6 +38,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     widescreenAspectRatioFix = true;
     widescreenFovCap = 105.0;
     forceMaxRefreshRate = true;
+    labs_borderlessFullscreen = false;
     useDirectConnect = false;
     directConnectIp = L"";
     directConnectPort = L"";
@@ -62,6 +64,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             widescreenAspectRatioFix = jsonConfig.value("widescreenAspectRatioFix", true);
             widescreenFovCap = jsonConfig.value("widescreenFovCap", 105.0);
             forceMaxRefreshRate = jsonConfig.value("forceMaxRefreshRate", true);
+            labs_borderlessFullscreen = jsonConfig.value("labs_borderlessFullscreen", false);
             mouseInputFix = jsonConfig.value("mouseInputFix", true);
             menuSensitivity = jsonConfig.value("menuSensitivity", 0.25);
             baseMouseSensitivity = jsonConfig.value("baseMouseSensitivity", 1.0);
@@ -139,6 +142,7 @@ bool Config::Serialize() {
             jsonConfig["widescreenAspectRatioFix"] = widescreenAspectRatioFix;
             jsonConfig["widescreenFovCap"] = widescreenFovCap;
             jsonConfig["forceMaxRefreshRate"] = forceMaxRefreshRate;
+            jsonConfig["labs_borderlessFullscreen"] = labs_borderlessFullscreen;
             jsonConfig["serverList"] = serverList;
             jsonConfig["security_acg"] = security_acg;
             jsonConfig["security_dep"] = security_dep;

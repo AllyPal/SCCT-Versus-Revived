@@ -52,19 +52,40 @@ int GetMaxRefreshRate(UINT displayWidth, UINT displayHeight) {
 static D3DPRESENT_PARAMETERS d3dppReplacement;
 static D3DPRESENT_PARAMETERS* overriddenD3dpp;
 void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
-    std::cout << "FullScreen_RefreshRateInHz: " << d3dpp->FullScreen_RefreshRateInHz << std::endl;
     std::cout << "BackBufferWidth: " << d3dpp->BackBufferWidth << std::endl;
-    std::cout << "AutoDepthStencilFormat: " << d3dpp->AutoDepthStencilFormat << std::endl;
-    std::cout << "BackBufferCount: " << d3dpp->BackBufferCount << std::endl;
-    std::cout << "BackBufferFormat: " << d3dpp->BackBufferFormat << std::endl;
     std::cout << "BackBufferHeight: " << d3dpp->BackBufferHeight << std::endl;
-    std::cout << "EnableAutoDepthStencil: " << d3dpp->EnableAutoDepthStencil << std::endl;
-    std::cout << "SwapEffect: " << d3dpp->SwapEffect << std::endl;
+    std::cout << "BackBufferFormat: " << d3dpp->BackBufferFormat << std::endl;
+    std::cout << "BackBufferCount: " << d3dpp->BackBufferCount << std::endl;
     std::cout << "MultiSampleType: " << d3dpp->MultiSampleType << std::endl;
+    std::cout << "SwapEffect: " << d3dpp->SwapEffect << std::endl;
+    std::cout << "hDeviceWindow: " << d3dpp->hDeviceWindow << std::endl;
+    std::cout << "Windowed: " << d3dpp->Windowed << std::endl;
+    std::cout << "EnableAutoDepthStencil: " << d3dpp->EnableAutoDepthStencil << std::endl;
+    std::cout << "AutoDepthStencilFormat: " << d3dpp->AutoDepthStencilFormat << std::endl;
     std::cout << "Flags: " << d3dpp->Flags << std::endl;
+    std::cout << "FullScreen_RefreshRateInHz: " << d3dpp->FullScreen_RefreshRateInHz << std::endl;
+    std::cout << "FullScreen_PresentationInterval: " << d3dpp->FullScreen_PresentationInterval << std::endl;
 
     ZeroMemory(&d3dppReplacement, sizeof(d3dppReplacement));
     d3dppReplacement = *d3dpp;
+
+    if (Config::labs_borderlessFullscreen) {
+        d3dppReplacement.Windowed = TRUE;
+        d3dppReplacement.SwapEffect = D3DSWAPEFFECT_DISCARD;
+        d3dppReplacement.BackBufferFormat = D3DFMT_UNKNOWN;
+        d3dppReplacement.BackBufferWidth = GetSystemMetrics(SM_CXSCREEN);
+        d3dppReplacement.BackBufferHeight = GetSystemMetrics(SM_CYSCREEN);
+        d3dppReplacement.FullScreen_RefreshRateInHz = 0;
+        d3dppReplacement.FullScreen_PresentationInterval = 0;
+
+        auto hWnd = d3dpp->hDeviceWindow;
+        LONG style = GetWindowLong(hWnd, GWL_STYLE);
+        style &= ~(WS_BORDER | WS_CAPTION | WS_THICKFRAME);
+        SetWindowLong(hWnd, GWL_STYLE, style);
+
+        SetWindowPos(hWnd, HWND_TOP, 0, 0, d3dppReplacement.BackBufferWidth,
+            d3dppReplacement.BackBufferHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+    }
 
     if (Config::forceMaxRefreshRate) {
         auto refreshRate = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
@@ -75,23 +96,22 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
     overriddenD3dpp = &d3dppReplacement;
 }
 
-int D3DPPEntry = 0x1095CA7A;
-__declspec(naked) void D3DPP() {
-    static D3DPRESENT_PARAMETERS* d3dpp;
-    __asm {
-        add     eax, 0x46A8
-        mov dword ptr[d3dpp], eax
-        push    eax
-        pushad
-    }
-    ProcessD3DPresentParameters(d3dpp);
-    static int Return = 0x1095CA80;
-    __asm {
-        popad
-        jmp dword ptr[Return]
-    }
-}
-
+//int D3DPPEntry = 0x1095CA7A;
+//__declspec(naked) void D3DPP() {
+//    static D3DPRESENT_PARAMETERS* d3dpp;
+//    __asm {
+//        add     eax, 0x46A8
+//        mov dword ptr[d3dpp], eax
+//        push    eax
+//        pushad
+//    }
+//    ProcessD3DPresentParameters(d3dpp);
+//    static int Return = 0x1095CA80;
+//    __asm {
+//        popad
+//        jmp dword ptr[Return]
+//    }
+//}
 
 void PrintD3DCAPS8(D3DCAPS8 caps) {
     std::wcout << std::fixed << std::hex << "DeviceCaps" << std::endl;
@@ -728,14 +748,12 @@ void Graphics::Initialize()
         MemoryWriter::WriteJump(endRenderMenuEntry, endHudMenuRender);
     }
 
-    MemoryWriter::WriteJump(D3DPPEntry, D3DPP);
+    //MemoryWriter::WriteJump(D3DPPEntry, D3DPP);
     MemoryWriter::WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);
 
     if (Config::fixFlashlight) {
+        // IDirect3D8_CheckDeviceFormat D3DFMT_D24X8 & D3DFMT_D16
         uint8_t d3dTypeRef[] = { D3DDEVTYPE_REF };
-        //MemoryWriter::WriteBytes(0x1095C86b, d3dTypeRef, sizeof(d3dTypeRef));
-        //MemoryWriter::WriteBytes(0x1095BA89, d3dTypeRef, sizeof(d3dTypeRef));
-        //MemoryWriter::WriteBytes(0x1095C8FF, d3dTypeRef, sizeof(d3dTypeRef));
         MemoryWriter::WriteBytes(0x1095BEC8, d3dTypeRef, sizeof(d3dTypeRef));
         MemoryWriter::WriteBytes(0x1095BF40, d3dTypeRef, sizeof(d3dTypeRef));
     }
