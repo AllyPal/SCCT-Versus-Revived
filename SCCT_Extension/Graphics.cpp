@@ -730,4 +730,13 @@ void Graphics::Initialize()
 
     MemoryWriter::WriteJump(D3DPPEntry, D3DPP);
     MemoryWriter::WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);
+
+    if (Config::fixFlashlight) {
+        uint8_t d3dTypeRef[] = { D3DDEVTYPE_REF };
+        MemoryWriter::WriteBytes(0x1095C86b, d3dTypeRef, sizeof(d3dTypeRef));
+        MemoryWriter::WriteBytes(0x1095BA89, d3dTypeRef, sizeof(d3dTypeRef));
+        MemoryWriter::WriteBytes(0x1095BEC8, d3dTypeRef, sizeof(d3dTypeRef));
+        MemoryWriter::WriteBytes(0x1095BF40, d3dTypeRef, sizeof(d3dTypeRef));
+        MemoryWriter::WriteBytes(0x1095C8FF, d3dTypeRef, sizeof(d3dTypeRef));
+    }
 }

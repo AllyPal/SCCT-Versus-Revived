@@ -10,6 +10,7 @@ int Config::frameRateLimit_client;
 int Config::frameRateLimit_hosting;
 int Config::frameTimingMode;
 bool Config::applyAnimationFix;
+bool Config::fixFlashlight;
 bool Config::widescreenAspectRatioFix;
 float Config::widescreenFovCap;
 bool Config::forceMaxRefreshRate;
@@ -32,6 +33,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     frameRateLimit_hosting = 60;
     frameTimingMode = 1;
     applyAnimationFix = true;
+    fixFlashlight = true;
     widescreenAspectRatioFix = true;
     widescreenFovCap = 105.0;
     forceMaxRefreshRate = true;
@@ -56,6 +58,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             frameRateLimit_hosting = jsonConfig.value("frameRateLimit_hosting", 60);
             frameTimingMode = jsonConfig.value("frameTimingMode", 1);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
+            fixFlashlight = jsonConfig.value("fixFlashlight", true);
             widescreenAspectRatioFix = jsonConfig.value("widescreenAspectRatioFix", true);
             widescreenFovCap = jsonConfig.value("widescreenFovCap", 105.0);
             forceMaxRefreshRate = jsonConfig.value("forceMaxRefreshRate", true);
@@ -129,6 +132,7 @@ bool Config::Serialize() {
             jsonConfig["frameRateLimit_hosting"] = frameRateLimit_hosting;
             jsonConfig["frameTimingMode"] = frameTimingMode;
             jsonConfig["applyAnimationFix"] = applyAnimationFix;
+            jsonConfig["fixFlashlight"] = fixFlashlight;
             jsonConfig["mouseInputFix"] = mouseInputFix;
             jsonConfig["menuSensitivity"] = menuSensitivity;
             jsonConfig["baseMouseSensitivity"] = baseMouseSensitivity;

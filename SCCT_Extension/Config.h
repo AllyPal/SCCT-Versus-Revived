@@ -9,6 +9,7 @@ public:
     static int frameRateLimit_hosting;
     static int frameTimingMode;
     static bool applyAnimationFix;
+    static bool fixFlashlight;
     static bool widescreenAspectRatioFix;
     static float widescreenFovCap;
     static bool forceMaxRefreshRate;
