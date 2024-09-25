@@ -22,6 +22,8 @@ static IDirect3D8* d3d;
 static LPDIRECT3DDEVICE8 pDevice;
 static int BackBufferWidth = 0;
 static int BackBufferHeight = 0;
+static int RenderWidth = 0;
+static int RenderHeight = 0;
 
 int D3DCreateResultEntry = 0x1095B986;
 __declspec(naked) void D3DCreateResult() {
@@ -67,6 +69,9 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
     std::cout << "Flags: " << d3dpp->Flags << std::endl;
     std::cout << "FullScreen_RefreshRateInHz: " << d3dpp->FullScreen_RefreshRateInHz << std::endl;
     std::cout << "FullScreen_PresentationInterval: " << d3dpp->FullScreen_PresentationInterval << std::endl;
+
+    RenderWidth = d3dpp->BackBufferWidth;
+    RenderHeight = d3dpp->BackBufferHeight;
 
     ZeroMemory(&d3dppReplacement, sizeof(d3dppReplacement));
     d3dppReplacement = *d3dpp;
@@ -243,6 +248,43 @@ __declspec(naked) void D3D8Caps() {
         jmp dword ptr[Return]
     }
 }
+
+bool ResolutionChangeAllowed(int height, int width) {
+    if (height == 0 || width == 0) {
+        return false;
+    }
+    auto result = width != RenderWidth || height != RenderHeight;
+    return result;
+}
+
+int CanChangeResolutionEntry = 0x10B0F9A1;
+__declspec(naked) void CanChangeResolution() {
+    static int SkipResolutionChange = 0x10B0F690;
+    static int ChangeResolution = 0x10B0F9B9;
+    static int Height;
+    static int Width;
+    __asm {
+        mov     eax, [esp + 0x40]
+        mov     ebx, [esp + 0x18]
+        mov dword ptr[Width], eax
+        mov dword ptr[Height], ebx
+        pushad
+    }
+    if (ResolutionChangeAllowed(Height, Width)) {
+        __asm {
+            popad
+            jmp dword ptr[ChangeResolution]
+        }
+    }
+    else {
+        __asm {
+            popad
+            jmp dword ptr[SkipResolutionChange]
+        }
+    }
+    
+}
+
 
 bool initialized = false;
 void OnDeviceCreated() {
@@ -777,6 +819,7 @@ void Graphics::Initialize()
     MemoryWriter::WriteJump(D3D8CapsEntry, D3D8Caps);
     MemoryWriter::WriteJump(D3DCreateResultEntry, D3DCreateResult);
     MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
+    MemoryWriter::WriteJump(CanChangeResolutionEntry, CanChangeResolution);
 
     if (Config::widescreenAspectRatioFix) {
         MemoryWriter::WriteJump(SetProjection1Entry, SetProjection1);
