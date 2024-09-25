@@ -776,6 +776,7 @@ void Graphics::Initialize()
     MemoryWriter::WriteJump(CreateDeviceEntry, CreateDevice);
     MemoryWriter::WriteJump(D3D8CapsEntry, D3D8Caps);
     MemoryWriter::WriteJump(D3DCreateResultEntry, D3DCreateResult);
+    MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
 
     if (Config::widescreenAspectRatioFix) {
         MemoryWriter::WriteJump(SetProjection1Entry, SetProjection1);
@@ -787,7 +788,6 @@ void Graphics::Initialize()
 
         MemoryWriter::WriteJump(startRenderMenuEntry, startHudMenuRender);
         MemoryWriter::WriteJump(endRenderMenuEntry, endHudMenuRender);
-        MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
     }
 
     //MemoryWriter::WriteJump(D3DPPEntry, D3DPP);
