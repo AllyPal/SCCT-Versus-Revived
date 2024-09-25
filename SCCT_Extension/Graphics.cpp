@@ -53,9 +53,7 @@ int GetMaxRefreshRate(UINT displayWidth, UINT displayHeight) {
     return maxRefreshRate;
 }
 
-static D3DPRESENT_PARAMETERS d3dppReplacement;
-static D3DPRESENT_PARAMETERS* overriddenD3dpp;
-void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
+void PrintParams(D3DPRESENT_PARAMETERS* d3dpp) {
     std::cout << "BackBufferWidth: " << d3dpp->BackBufferWidth << std::endl;
     std::cout << "BackBufferHeight: " << d3dpp->BackBufferHeight << std::endl;
     std::cout << "BackBufferFormat: " << d3dpp->BackBufferFormat << std::endl;
@@ -69,7 +67,12 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
     std::cout << "Flags: " << d3dpp->Flags << std::endl;
     std::cout << "FullScreen_RefreshRateInHz: " << d3dpp->FullScreen_RefreshRateInHz << std::endl;
     std::cout << "FullScreen_PresentationInterval: " << d3dpp->FullScreen_PresentationInterval << std::endl;
+}
 
+static D3DPRESENT_PARAMETERS d3dppReplacement;
+static D3DPRESENT_PARAMETERS* overriddenD3dpp;
+void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
+    //PrintParams(d3dpp);
     RenderWidth = d3dpp->BackBufferWidth;
     RenderHeight = d3dpp->BackBufferHeight;
 
@@ -142,22 +145,23 @@ __declspec(naked) void OverrideSetViewport() {
     }
 }
 
-//int D3DPPEntry = 0x1095CA7A;
-//__declspec(naked) void D3DPP() {
-//    static D3DPRESENT_PARAMETERS* d3dpp;
-//    __asm {
-//        add     eax, 0x46A8
-//        mov dword ptr[d3dpp], eax
-//        push    eax
-//        pushad
-//    }
-//    ProcessD3DPresentParameters(d3dpp);
-//    static int Return = 0x1095CA80;
-//    __asm {
-//        popad
-//        jmp dword ptr[Return]
-//    }
-//}
+int OverrideSetViewport3DEntry = 0x1095E1AF;
+__declspec(naked) void OverrideSetViewport3D() {
+    static D3DVIEWPORT8* viewport;
+    static int result;
+    __asm {
+        lea     eax, [esp + 0x24]
+        mov dword ptr[viewport], eax
+        pushad
+    }
+    result = SetViewport(viewport);
+    static int Return = 0x1095E1BB;
+    __asm {
+        popad
+        mov eax, dword ptr[result]
+        jmp dword ptr[Return]
+    }
+}
 
 void PrintD3DCAPS8(D3DCAPS8 caps) {
     std::wcout << std::fixed << std::hex << "DeviceCaps" << std::endl;
@@ -242,7 +246,7 @@ __declspec(naked) void D3D8Caps() {
         call dword ptr[ecx + 0x34]
         pushad
     }
-    PrintD3DCAPS8(*caps);
+    //PrintD3DCAPS8(*caps);
     __asm {
         popad
         jmp dword ptr[Return]
@@ -283,6 +287,14 @@ __declspec(naked) void CanChangeResolution() {
     
 }
 
+int StopDeviceReleaseEntry = 0x1095C9B1;
+__declspec(naked) void StopDeviceRelease() {
+    static int SkipRelease = 0x1095C9D4;
+    __asm {
+        xor ecx,ecx
+        jmp dword ptr[SkipRelease]
+    }
+}
 
 bool initialized = false;
 void OnDeviceCreated() {
@@ -292,14 +304,71 @@ void OnDeviceCreated() {
     }
 }
 
+HRESULT CreateDeviceOverride(UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DDevice8** ppReturnedDeviceInterface) {
+    if (pDevice == nullptr) {
+        std::cout << "CreateDevice" << std::endl;
+        auto result = d3d->CreateDevice(Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
+        pDevice = *ppReturnedDeviceInterface;
+        return result;
+    }
+    else {
+        HRESULT result = D3DERR_NOTFOUND;
+        switch (pDevice->TestCooperativeLevel()) {
+        case D3D_OK:
+        case D3DERR_DEVICENOTRESET:
+        {
+            std::cout << "Reset" << std::endl;
+            std::cout << "W: " << d3dppReplacement.BackBufferWidth << "H: " << d3dppReplacement.BackBufferHeight << std::endl;
+            result = pDevice->Reset(&d3dppReplacement);
+            if (!SUCCEEDED(result)) {
+                switch (result) {
+                case D3DERR_DEVICELOST:
+                    std::cout << "Error: Device lost and cannot be reset at this time." << std::endl;
+                    break;
+                case D3DERR_DEVICENOTRESET:
+                    std::cout << "Error: Device is lost but can be reset." << std::endl;
+                    break;
+                case D3DERR_OUTOFVIDEOMEMORY:
+                    std::cout << "Error: Out of video memory." << std::endl;
+                    break;
+                case E_OUTOFMEMORY:
+                    std::cout << "Error: Out of system memory." << std::endl;
+                    break;
+                case D3DERR_INVALIDCALL:
+                    std::cout << "Error: Invalid function call." << std::endl;
+                    break;
+                default:
+                    std::cout << "Error: Unknown error, HRESULT = " << std::hex << result << std::endl;
+                    break;
+                }
+            }
+        }
+            break;
+        default:
+            std::cout << "Unexpected TestCooperativeLevel result" << std::endl;
+            break;
+        }
+
+        return  result;
+    }
+}
+
 int CreateDeviceEntry = 0x1095CA73;
 __declspec(naked) void CreateDevice() {
     static int Return = 0x1095CAB2;
     static int Fail = 0x1095D9B3;
     static D3DPRESENT_PARAMETERS* d3dpp;
+    static UINT Adapter;
+    static D3DDEVTYPE DeviceType;
+    static HWND hFocusWindow;
+    static DWORD BehaviorFlags;
+    static D3DPRESENT_PARAMETERS* pPresentationParameters;
+    static IDirect3DDevice8** ppReturnedDeviceInterface;
+    static HRESULT result;
     __asm {
         lea edx, [eax + 0x000046A4]
         push edx
+        mov [ppReturnedDeviceInterface], edx
         add     eax, 0x46A8
         mov dword ptr[d3dpp], eax
         pushad
@@ -309,28 +378,44 @@ __declspec(naked) void CreateDevice() {
         popad
         mov eax, dword ptr[overriddenD3dpp]
         push eax
+        mov[pPresentationParameters], eax
 
         mov eax, [ecx]
         push edi // 0x42
+        mov[BehaviorFlags], edi
+
         call dword ptr[eax + 0x000000B4]
         mov ecx, [esp + 0x2C]
         mov edx, [esp + 0x18]
         push eax
+        mov[hFocusWindow], eax
         mov eax, [edx + 0x00004678]
-        push ecx // hal
+        push ecx
+        mov[DeviceType], ecx
         push eax
+        mov[Adapter], eax
         push esi
-        call dword ptr[ebx + 0x3C]
+
+        //call dword ptr[ebx + 0x3C]
+        add esp, 0x1c
+        pushad
+    }
+    result = CreateDeviceOverride(Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
+    __asm{
+        popad
+        mov eax, dword ptr[result]
         test eax, eax
         je success
         jmp dword ptr[Fail]
         success:
 
         mov ecx, [esp + 0x0C]
+
+        mov eax, [pDevice]
+        mov [ecx + 0x46A4], eax
         mov     eax, [ecx + 0x46A4]
         mov     edx, [eax]
         pushad
-        mov[pDevice], eax
     }
     OnDeviceCreated();
     __asm {
@@ -816,8 +901,11 @@ void Graphics::Initialize()
     MemoryWriter::WriteJump(CreateDeviceEntry, CreateDevice);
     MemoryWriter::WriteJump(D3D8CapsEntry, D3D8Caps);
     MemoryWriter::WriteJump(D3DCreateResultEntry, D3DCreateResult);
-    MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
+    //MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
+    //MemoryWriter::WriteJump(OverrideSetViewport3DEntry, OverrideSetViewport3D);
     MemoryWriter::WriteJump(CanChangeResolutionEntry, CanChangeResolution);
+
+    MemoryWriter::WriteJump(StopDeviceReleaseEntry, StopDeviceRelease);
 
     if (Config::widescreenAspectRatioFix) {
         MemoryWriter::WriteJump(SetProjection1Entry, SetProjection1);
