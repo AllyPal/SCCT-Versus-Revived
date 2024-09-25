@@ -20,6 +20,8 @@
 
 static IDirect3D8* d3d;
 static LPDIRECT3DDEVICE8 pDevice;
+static int BackBufferWidth = 0;
+static int BackBufferHeight = 0;
 
 int D3DCreateResultEntry = 0x1095B986;
 __declspec(naked) void D3DCreateResult() {
@@ -68,7 +70,6 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
 
     ZeroMemory(&d3dppReplacement, sizeof(d3dppReplacement));
     d3dppReplacement = *d3dpp;
-
     if (Config::labs_borderlessFullscreen) {
         d3dppReplacement.Windowed = TRUE;
         d3dppReplacement.SwapEffect = D3DSWAPEFFECT_DISCARD;
@@ -93,7 +94,47 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
             d3dppReplacement.FullScreen_RefreshRateInHz = refreshRate;
         }
     }
+
+    BackBufferWidth = d3dppReplacement.BackBufferWidth;
+    BackBufferHeight = d3dppReplacement.BackBufferHeight;
     overriddenD3dpp = &d3dppReplacement;
+}
+
+HRESULT SetViewport(D3DVIEWPORT8* viewport) {
+    if (Config::labs_borderlessFullscreen) {
+        auto widthRatio = (float)BackBufferWidth / viewport->Width;
+        auto heightRatio = (float)BackBufferHeight / viewport->Height;
+        if (widthRatio > heightRatio) {
+            viewport->Width *= heightRatio;
+            viewport->Height *= heightRatio;
+        }
+        else {
+            viewport->Width *= widthRatio;
+            viewport->Height *= widthRatio;
+        }
+
+        viewport->X = (BackBufferWidth - viewport->Width) / 2;
+        viewport->Y = (BackBufferHeight - viewport->Height) / 2;
+    }
+    return pDevice->SetViewport(viewport);
+}
+
+int OverrideSetViewportEntry = 0x10961273;
+__declspec(naked) void OverrideSetViewport() {
+    static D3DVIEWPORT8* viewport;
+    static int result;
+    __asm {
+        lea     edx, [esp + 0x10]
+        mov dword ptr[viewport], edx
+        pushad
+    }
+    result = SetViewport(viewport);
+    static int Return = 0x1096127F;
+    __asm {
+        popad
+        mov eax, dword ptr[result]
+        jmp dword ptr[Return]
+    }
 }
 
 //int D3DPPEntry = 0x1095CA7A;
@@ -746,6 +787,7 @@ void Graphics::Initialize()
 
         MemoryWriter::WriteJump(startRenderMenuEntry, startHudMenuRender);
         MemoryWriter::WriteJump(endRenderMenuEntry, endHudMenuRender);
+        MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
     }
 
     //MemoryWriter::WriteJump(D3DPPEntry, D3DPP);
