@@ -250,16 +250,14 @@ __declspec(naked) void D3D8Caps() {
 }
 
 bool ResolutionChangeAllowed(int height, int width) {
-    if (height == 0 || width == 0) {
-        return false;
-    }
-    auto result = width != RenderWidth || height != RenderHeight;
+    auto result = (width != RenderWidth || height != RenderHeight) && height != 0 && width != 0;
     return result;
 }
 
 int CanChangeResolutionEntry = 0x10B0F9A1;
 __declspec(naked) void CanChangeResolution() {
-    static int SkipResolutionChange = 0x10B0F690;
+    //static int SkipResolutionChange = 0x10B0F690;
+    static int SkipResolutionChange = 0x10B0F7ED;
     static int ChangeResolution = 0x10B0F9B9;
     static int Height;
     static int Width;
