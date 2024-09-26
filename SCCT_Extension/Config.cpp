@@ -58,6 +58,9 @@ void Config::Initialize(std::wstring& configFilePath) {
 
             frameRateLimit_client = jsonConfig.value("frameRateLimit_client", 60);
             frameRateLimit_hosting = jsonConfig.value("frameRateLimit_hosting", 60);
+#ifndef _DEBUG
+            frameRateLimit_hosting = std::clamp(frameRateLimit_hosting, 30, 90);
+#endif
             frameTimingMode = jsonConfig.value("frameTimingMode", 1);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);
             fixFlashlight = jsonConfig.value("fixFlashlight", true);
