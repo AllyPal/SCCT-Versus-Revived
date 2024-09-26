@@ -1,8 +1,5 @@
 #include "pch.h"
 #include "Graphics.h"
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <dinput.h>
 #include "include/d3d8/d3d8.h"
 #include <format>
 #include <set>
@@ -165,6 +162,25 @@ __declspec(naked) void OverrideSetViewport3D() {
         jmp dword ptr[Return]
     }
 }
+
+//void SetWorldMatrix(D3DMATRIX* matrix) {
+//    pDevice->SetTransform(D3DTS_WORLD, matrix);
+//}
+//
+//int OverrideWorldMatrixEntry = 0x1096CA4A;
+//__declspec(naked) void OverrideWorldMatrix() {
+//    static D3DMATRIX* matrix;
+//    __asm {
+//        mov [matrix], ebp
+//        pushad
+//    }
+//    SetWorldMatrix(matrix);
+//    static int Return = 0x1096CA57;
+//    __asm {
+//        popad
+//        jmp dword ptr[Return]
+//   }
+//}
 
 void PrintD3DCAPS8(D3DCAPS8 caps) {
     std::wcout << std::fixed << std::hex << "DeviceCaps" << std::endl;
@@ -552,7 +568,6 @@ static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
         }
 
         int scalingMode = 0;
-
         switch (scalingMode) {
         default:
             ApplyWidthScaling(projMatrix, displayHeight, displayWidth);
@@ -904,8 +919,9 @@ void Graphics::Initialize()
     MemoryWriter::WriteJump(CreateDeviceEntry, CreateDevice);
     MemoryWriter::WriteJump(D3D8CapsEntry, D3D8Caps);
     MemoryWriter::WriteJump(D3DCreateResultEntry, D3DCreateResult);
-    MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
-    MemoryWriter::WriteJump(OverrideSetViewport2Entry, OverrideSetViewport3D);
+    //MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
+    //MemoryWriter::WriteJump(OverrideSetViewport2Entry, OverrideSetViewport3D);
+    //MemoryWriter::WriteJump(OverrideWorldMatrixEntry, OverrideWorldMatrix);
     MemoryWriter::WriteJump(CanChangeResolutionEntry, CanChangeResolution);
 
     MemoryWriter::WriteJump(StopDeviceReleaseEntry, StopDeviceRelease);

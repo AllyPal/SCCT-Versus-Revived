@@ -1,14 +1,7 @@
 #include "pch.h"
 #include "Input.h"
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #include <dinput.h>
 #include <format>
-#include <set>
-#include <iostream>
-#include <thread>
-#include <chrono>
-#include <timeapi.h>
 #include <Windows.h>
 #include "StringOperations.h"
 #include "MemoryWriter.h"

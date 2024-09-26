@@ -1,9 +1,5 @@
 #include "pch.h"
 #include "GameConsole.h"
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <dinput.h>
-#include "include/d3d8/d3d8.h"
 #include <format>
 #include <set>
 #include <iostream>

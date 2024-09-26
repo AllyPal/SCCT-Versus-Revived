@@ -1,15 +1,6 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <iomanip>
-#include <sstream>
 #include <Windows.h>
-#include <thread>
-#include <chrono>
-#include "include/nlohmann/json.hpp"
 #include "logger.h"
 #include "CodeCaves.h"
 #include "Config.h"
