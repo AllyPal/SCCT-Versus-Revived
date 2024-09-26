@@ -81,7 +81,6 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
     if (Config::labs_borderlessFullscreen) {
         d3dppReplacement.Windowed = TRUE;
         d3dppReplacement.SwapEffect = D3DSWAPEFFECT_DISCARD;
-        d3dppReplacement.BackBufferFormat = D3DFMT_UNKNOWN;
         d3dppReplacement.BackBufferWidth = GetSystemMetrics(SM_CXSCREEN);
         d3dppReplacement.BackBufferHeight = GetSystemMetrics(SM_CYSCREEN);
         d3dppReplacement.FullScreen_RefreshRateInHz = 0;
@@ -96,7 +95,7 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
             d3dppReplacement.BackBufferHeight, SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
-    if (Config::forceMaxRefreshRate) {
+    if (Config::forceMaxRefreshRate && !Config::labs_borderlessFullscreen) {
         auto refreshRate = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
         if (refreshRate != 0) {
             d3dppReplacement.FullScreen_RefreshRateInHz = refreshRate;
