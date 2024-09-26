@@ -93,7 +93,7 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
 
         SetWindowPos(hWnd, HWND_TOP, 0, 0, d3dppReplacement.BackBufferWidth,
             d3dppReplacement.BackBufferHeight, SWP_NOZORDER | SWP_NOACTIVATE);
-    }
+        }
 
     if (Config::forceMaxRefreshRate && !Config::labs_borderlessFullscreen) {
         auto refreshRate = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
@@ -109,21 +109,25 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
 
 HRESULT SetViewport(D3DVIEWPORT8* viewport) {
     if (Config::labs_borderlessFullscreen) {
-        auto widthRatio = (float)BackBufferWidth / viewport->Width;
-        auto heightRatio = (float)BackBufferHeight / viewport->Height;
+        auto widthRatio = (float)BackBufferWidth / RenderWidth;
+        auto heightRatio = (float)BackBufferHeight / RenderHeight;
         if (widthRatio > heightRatio) {
-            viewport->Width *= heightRatio;
-            viewport->Height *= heightRatio;
+            viewport->Width = RenderWidth * heightRatio;
+            viewport->Height = RenderHeight * heightRatio;
         }
         else {
-            viewport->Width *= widthRatio;
-            viewport->Height *= widthRatio;
+            viewport->Width = RenderWidth * widthRatio;
+            viewport->Height = RenderHeight * widthRatio;
         }
 
         viewport->X = (BackBufferWidth - viewport->Width) / 2;
         viewport->Y = (BackBufferHeight - viewport->Height) / 2;
     }
-    return pDevice->SetViewport(viewport);
+    auto result = pDevice->SetViewport(viewport);
+    if (FAILED(result)) {
+        std::cout << "Failed to set viewport" << std::endl;
+    }
+    return result;
 }
 
 int OverrideSetViewportEntry = 0x10961273;
@@ -144,7 +148,7 @@ __declspec(naked) void OverrideSetViewport() {
     }
 }
 
-int OverrideSetViewport3DEntry = 0x1095E1AF;
+int OverrideSetViewport2Entry = 0x1095E1AF;
 __declspec(naked) void OverrideSetViewport3D() {
     static D3DVIEWPORT8* viewport;
     static int result;
@@ -900,8 +904,8 @@ void Graphics::Initialize()
     MemoryWriter::WriteJump(CreateDeviceEntry, CreateDevice);
     MemoryWriter::WriteJump(D3D8CapsEntry, D3D8Caps);
     MemoryWriter::WriteJump(D3DCreateResultEntry, D3DCreateResult);
-    //MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
-    //MemoryWriter::WriteJump(OverrideSetViewport3DEntry, OverrideSetViewport3D);
+    MemoryWriter::WriteJump(OverrideSetViewportEntry, OverrideSetViewport);
+    MemoryWriter::WriteJump(OverrideSetViewport2Entry, OverrideSetViewport3D);
     MemoryWriter::WriteJump(CanChangeResolutionEntry, CanChangeResolution);
 
     MemoryWriter::WriteJump(StopDeviceReleaseEntry, StopDeviceRelease);
