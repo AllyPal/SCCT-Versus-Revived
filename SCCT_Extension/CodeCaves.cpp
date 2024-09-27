@@ -292,11 +292,11 @@ __declspec(naked) void OnStateChange() {
     
     if (!ValidateState(newState)) {
         __asm {
-            mov     eax, 0x13BFF3
+            mov     eax, 0x193
             mov[esp + 0x2c], eax
             popad
             mov     edx, [edi]
-            mov     eax, 0x13BFF3
+            mov     eax, 0x193
             push    eax
             mov     ecx, edi
             call    dword ptr[edx + 0x30]
