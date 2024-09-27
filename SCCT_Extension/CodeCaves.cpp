@@ -327,11 +327,68 @@ __declspec(naked) void StickyCamContextMenuBlock() {
     }
 }
 
+
+static std::map<std::pair<std::wstring, std::wstring>, std::wstring> overrideMap;
+static void InitLabelOverrides() {
+    overrideMap[{L"TitlePage", L"LAN_Menu"}] = L"Redux Session";
+    overrideMap[{L"TitrePage.Caption", L"LAN_Menu"}] = L"Redux Session";
+
+    overrideMap[{L"MainPage_Live.Caption", L"Menu_Multi"}] = L" ";
+    overrideMap[{L"MainPage_LAN.Caption", L"Menu_Multi"}] = L"Play Online";
+
+    overrideMap[{L"TitlePage", L"Lobby_Create"}] = L"Redux Room";
+}
+
+wchar_t* OverrideLabel(wchar_t* languageName, wchar_t* controlName, wchar_t* menuName, wchar_t* current) {
+    std::wstring controlKey(controlName);
+    std::wstring menuKey(menuName);
+
+    std::pair<std::wstring, std::wstring> key = { controlKey, menuKey };
+
+    if (overrideMap.find(key) != overrideMap.end()) {
+        return const_cast<wchar_t*>(overrideMap[key].c_str());
+    }
+
+    return current;
+}
+
+static int LoadTextEntry = 0x10912900;
+__declspec(naked) void LoadText() {
+    static int Return = 0x1091290C;
+    static wchar_t* _eax;
+    static wchar_t* _edi;
+    static wchar_t* _ebp;
+    static wchar_t* current;
+    static wchar_t* textOverride;
+    __asm {
+        lea     eax, [esp + 0x8]
+        push eax
+        mov[_eax], eax
+        push edi
+        mov[_edi], edi
+        push 0
+        push ebp
+        mov[_ebp], ebp
+        call    dword ptr[edx + 0xC]
+        mov[current],eax
+        pushad
+    } 
+    textOverride = OverrideLabel(_eax, _edi, _ebp, current);
+    __asm{
+        popad
+        mov eax,[textOverride]
+        jmp dword ptr[Return]
+    }
+}
+
 void CodeCaves::Initialize()
 {
+    InitLabelOverrides();
+
     MemoryWriter::WriteJump(InstaFixEntry, InstaFix);
     MemoryWriter::WriteJump(SetLvInEntry, SetLvIn);
     MemoryWriter::WriteJump(OnStateChangeEntry, OnStateChange);
+    MemoryWriter::WriteJump(LoadTextEntry, LoadText);
 
     if (Config::disableStickyCamContextMenu) {
         MemoryWriter::WriteJump(StickyCamContextMenuBlockEntry, StickyCamContextMenuBlock);
