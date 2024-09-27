@@ -337,9 +337,20 @@ static void InitLabelOverrides() {
     overrideMap[{L"MainPage_LAN.Caption", L"Menu_Multi"}] = L"Play Online";
 
     overrideMap[{L"TitlePage", L"Lobby_Create"}] = L"Redux Room";
+
+    overrideMap[{L"MouseSensitive.Caption", L"Controller_Settings"}] = L"Type sens in console for mouse sensitivity. Keep this at 40";
+}
+
+void PrintTextEntry(wchar_t* _eax, wchar_t* _edi, wchar_t* _ebp, wchar_t* result) {
+    if (result != nullptr) {
+        // No need to dereference the pointers, just pass them directly
+        std::wcout << std::format(L"eax:{} edi:{} ebp:{} result: {}", _eax, _edi, _ebp, result) << std::endl;
+    }
 }
 
 wchar_t* OverrideLabel(wchar_t* languageName, wchar_t* controlName, wchar_t* menuName, wchar_t* current) {
+    PrintTextEntry(languageName, controlName, menuName, current);
+
     std::wstring controlKey(controlName);
     std::wstring menuKey(menuName);
 

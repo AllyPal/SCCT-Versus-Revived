@@ -57,9 +57,9 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
                 Config::baseMouseSensitivity = std::stof(arg);
             Config::Serialize();
             }
-            GameConsole::WriteGameConsole(std::format(L" > m_sens {:.3f}", Config::baseMouseSensitivity));
+            GameConsole::WriteGameConsole(std::format(L" > sens {:.3f}", Config::baseMouseSensitivity));
             },
-            std::format(L" m_sens {:.3f}", Config::baseMouseSensitivity)
+            std::format(L" sens {:.3f}", Config::baseMouseSensitivity)
         };
 
         commandHandlers[L"sens_menu"] = {
@@ -69,9 +69,9 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
                 Config::menuSensitivity = std::stof(arg);
             Config::Serialize();
             }
-            GameConsole::WriteGameConsole(std::format(L" > m_menu_sens {:.3f}", Config::menuSensitivity));
+            GameConsole::WriteGameConsole(std::format(L" > sens_menu {:.3f}", Config::menuSensitivity));
             },
-            std::format(L" m_menu_sens {:.3f}", Config::menuSensitivity)
+            std::format(L" sens_menu {:.3f}", Config::menuSensitivity)
         };
     }
 
@@ -86,9 +86,9 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
             Config::frameRateLimit_client = frameLimit;
             Config::Serialize();
         }
-        GameConsole::WriteGameConsole(std::format(L" > d_fps_client {}", Config::frameRateLimit_client));
+        GameConsole::WriteGameConsole(std::format(L" > fps_client {}", Config::frameRateLimit_client));
         },
-        std::format(L" d_fps_client {}", Config::frameRateLimit_client)
+        std::format(L" fps_client {}", Config::frameRateLimit_client)
     };
 
     commandHandlers[L"fps_host"] = {
@@ -108,9 +108,9 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
             Config::frameRateLimit_hosting = frameLimit;
             Config::Serialize();
         }
-        GameConsole::WriteGameConsole(std::format(L" > d_fps_hosting {}", Config::frameRateLimit_hosting));
+        GameConsole::WriteGameConsole(std::format(L" > fps_host {}", Config::frameRateLimit_hosting));
         },
-        std::format(L" d_fps_hosting {}", Config::frameRateLimit_hosting)
+        std::format(L" fps_host {}", Config::frameRateLimit_hosting)
     };
 
     commandHandlers[L"quit"] = {
@@ -120,14 +120,14 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
         }
     };
 
-    commandHandlers[L"test1"] = {
-        L"- test1",
-        [](const std::wstring& arg) {
-            const uint8_t NOP = 0x90;
-            uint8_t nops[] = { NOP, NOP };
-            MemoryWriter::WriteBytes(0x10AA0535, nops, sizeof(nops));
-        }
-    };
+    //commandHandlers[L"test1"] = {
+    //    L"- test1",
+    //    [](const std::wstring& arg) {
+    //        const uint8_t NOP = 0x90;
+    //        uint8_t nops[] = { NOP, NOP };
+    //        MemoryWriter::WriteBytes(0x10AA0535, nops, sizeof(nops));
+    //    }
+    //};
 
     commandHandlers[L"help"] = {
         L"- Display command list.",
