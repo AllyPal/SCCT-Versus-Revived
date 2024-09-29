@@ -330,13 +330,13 @@ __declspec(naked) void StickyCamContextMenuBlock() {
 
 static std::map<std::pair<std::wstring, std::wstring>, std::wstring> overrideMap;
 static void InitLabelOverrides() {
-    overrideMap[{L"TitlePage", L"LAN_Menu"}] = L"Redux Session";
-    overrideMap[{L"TitrePage.Caption", L"LAN_Menu"}] = L"Redux Session";
+    overrideMap[{L"TitlePage", L"LAN_Menu"}] = L"Redux Online Session";
+    overrideMap[{L"TitrePage.Caption", L"LAN_Menu"}] = L"Redux Online Session";
 
     overrideMap[{L"MainPage_Live.Caption", L"Menu_Multi"}] = L" ";
     overrideMap[{L"MainPage_LAN.Caption", L"Menu_Multi"}] = L"Play Online";
 
-    overrideMap[{L"TitlePage", L"Lobby_Create"}] = L"Redux Room";
+    overrideMap[{L"TitlePage", L"Lobby_Create"}] = L"Redux Lobby";
 
     overrideMap[{L"MouseSensitive.Caption", L"Controller_Settings"}] = L"Type sens in console for mouse sensitivity. Keep this at 40";
 }

@@ -19,6 +19,9 @@ bool Config::labs_borderlessFullscreen;
 bool Config::useDirectConnect;
 std::wstring Config::directConnectIp;
 std::wstring Config::directConnectPort;
+
+std::string Config::masterServerDns;
+
 bool Config::mouseInputFix;
 float Config::menuSensitivity;
 float Config::baseMouseSensitivity;
@@ -42,6 +45,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     useDirectConnect = false;
     directConnectIp = L"";
     directConnectPort = L"";
+    masterServerDns = "scct-redux-master.duckdns.org:11000";
     mouseInputFix = true;
     menuSensitivity = 0.25;
     baseMouseSensitivity = 1.0;
@@ -75,6 +79,8 @@ void Config::Initialize(std::wstring& configFilePath) {
             security_acg = jsonConfig.value("security_acg", false);
             security_dep = jsonConfig.value("security_dep", true);
             disableStickyCamContextMenu = jsonConfig.value("disableStickyCamContextMenu", true);
+            masterServerDns = jsonConfig.value("masterServerDns", "scct-redux-master.duckdns.org:11000");
+
             // Update the file with any new fields
             Serialize();
         }
@@ -150,6 +156,7 @@ bool Config::Serialize() {
             jsonConfig["security_acg"] = security_acg;
             jsonConfig["security_dep"] = security_dep;
             jsonConfig["disableStickyCamContextMenu"] = disableStickyCamContextMenu;
+            jsonConfig["masterServerDns"] = masterServerDns;
 
             configFile << jsonConfig.dump(4);
             return true;

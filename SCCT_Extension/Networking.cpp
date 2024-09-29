@@ -34,10 +34,10 @@ int SendPacket(sockaddr_in& to, uintptr_t messagePtr, SOCKET _socket, int messag
     char ipAddress[20];
     inet_ntop(AF_INET, &to.sin_addr, ipAddress, sizeof(ipAddress));
 
-    std::cout << "Preparing to send message:" << std::endl;
+   /* std::cout << "Preparing to send message:" << std::endl;
     std::cout << "  sin_family: " << to.sin_family << std::endl;
     std::cout << "  sin_port: " << std::dec << ntohs(to.sin_port) << std::endl;
-    std::cout << "  sin_addr.s_addr: " << ipAddress << std::endl;
+    std::cout << "  sin_addr.s_addr: " << ipAddress << std::endl;*/
 
     auto message = reinterpret_cast<char*>(messagePtr);
     int result = sendto(_socket, message, messageLength, 0, (struct sockaddr*)&to, sizeof(to));
@@ -46,7 +46,7 @@ int SendPacket(sockaddr_in& to, uintptr_t messagePtr, SOCKET _socket, int messag
         std::cerr << "sendto failed with error: " << WSAGetLastError() << std::endl;
     }
     else {
-        std::cout << "Message sent successfully. Bytes sent: " << result << std::endl;
+        //std::cout << "Message sent successfully. Bytes sent: " << result << std::endl;
     }
 
     return result;

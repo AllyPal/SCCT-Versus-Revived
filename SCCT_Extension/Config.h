@@ -24,6 +24,8 @@ public:
     static std::wstring directConnectIp;
     static std::wstring directConnectPort;
 
+    static std::string masterServerDns;
+
     static bool mouseInputFix;
     static float baseMouseSensitivity;
     static float menuSensitivity;
