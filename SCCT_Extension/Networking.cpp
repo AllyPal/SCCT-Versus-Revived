@@ -149,8 +149,118 @@ __declspec(naked) void ServerInfoBroadcast() {
     }
 }
 
+std::unordered_map<std::string, std::pair<uint32_t, uint16_t>> dnsCache;
+
+std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dnsName) {
+    if (dnsCache.find(dnsName) != dnsCache.end()) {
+        return dnsCache[dnsName];
+    }
+
+    size_t colonPos = dnsName.find(':');
+    if (colonPos == std::string::npos) {
+        return { 0, 0 };
+    }
+
+    std::string hostname = dnsName.substr(0, colonPos);
+    int port = std::stoi(dnsName.substr(colonPos + 1));
+
+    struct addrinfo hints, * res;
+    std::memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if (getaddrinfo(hostname.c_str(), nullptr, &hints, &res) != 0) {
+        return { 0, 0 };
+    }
+
+    struct sockaddr_in* ipv4 = reinterpret_cast<struct sockaddr_in*>(res->ai_addr);
+    char ipStr[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(ipv4->sin_addr), ipStr, sizeof ipStr);
+
+    // Replace inet_addr with inet_pton
+    uint32_t ipAddr;
+    if (inet_pton(AF_INET, ipStr, &ipAddr) != 1) {
+        freeaddrinfo(res);
+        return { 0, 0 };
+    }
+    freeaddrinfo(res);
+
+    dnsCache[dnsName] = { ntohl(ipAddr), port };
+    return { ntohl(ipAddr), port };
+}
+
+void handleListPacket(std::wstring packetId, wchar_t* buffer, uint32_t recvBytes) {
+    std::cout << "Server list packet: " << StringOperations::WStringToString(packetId) << std::endl;
+    if (sizeof(packetId) == recvBytes) {
+        std::cout << "Server list is empty" << std::endl;
+    }
+}
+
+void handleOther(std::wstring packetId, wchar_t* buffer) {
+    std::cout << "Unknown master server packet: " << StringOperations::WStringToString(packetId) << std::endl;
+}
+
+void handlePacket(uint32_t clientIP, uint16_t clientPort, uint32_t recvBytes, wchar_t* buffer) {
+    //struct in_addr ipAddr;
+    //ipAddr.s_addr = htonl(clientIP);
+
+    //char ipStr[INET_ADDRSTRLEN];
+    //inet_ntop(AF_INET, &ipAddr, ipStr, INET_ADDRSTRLEN);
+
+    /*std::cout << "From IP: " << ipStr << ":" << clientPort << " Bytes: " << recvBytes << std::endl;
+    std::wstring localWString(buffer, recvBytes/2);
+    std::cout << StringOperations::WStringToString(localWString) << std::endl;*/
+
+    static auto masterIpPort = ConvertDnsToIpAndPort(Config::masterServerDns);
+    if (clientIP == masterIpPort.first && clientPort == masterIpPort.second && recvBytes >= 16) {
+        std::wstring packetId(buffer, 8);
+
+        static std::unordered_map<std::wstring, std::function<void(std::wstring, wchar_t*, uint32_t)>> handlers = {
+            {L"SCLILIST", handleListPacket},
+        };
+
+        auto it = handlers.find(packetId);
+        if (it != handlers.end()) {
+            it->second(packetId, buffer, recvBytes);
+        }
+        else {
+            handleOther(packetId, buffer);
+        }
+    }
+}
+
+int InterceptMasterServerPacketEntry = 0x10A80004;
+__declspec(naked) void InterceptMasterServerPacket() {
+    static uint16_t clientPort;
+    static uint32_t clientIP;
+    static uint32_t recvBytes;
+    static wchar_t* buffer;
+    __asm {
+        movzx   ebx, ax
+        mov [clientPort], ax
+        mov [clientIP], ebp
+        mov [recvBytes], esi
+
+        // restore eax later
+        lea eax, [esp + 0x140]
+        mov [buffer], eax
+        add eax, esi
+        mov byte ptr[eax], 0
+        pushad
+    }
+    handlePacket(clientIP, clientPort, recvBytes, buffer);
+
+    static int Return = 0x10A8000D;
+    __asm {
+        popad
+        mov     al, [edi + 0x2F8]
+        jmp dword ptr[Return]
+    }
+}
+
 void Networking::Initialize()
 {
     MemoryWriter::WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     MemoryWriter::WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
+    MemoryWriter::WriteJump(InterceptMasterServerPacketEntry, InterceptMasterServerPacket);
 }
