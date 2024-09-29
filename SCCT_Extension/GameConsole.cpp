@@ -80,9 +80,16 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
         [](const std::wstring& arg) {
         if (!arg.empty()) {
             auto frameLimit = std::stoi(arg);
+#ifndef _DEBUG
             if (frameLimit < 30) {
                 frameLimit = 30;
+                GameConsole::WriteGameConsole(std::format(L" > minimum setting is 30 FPS", Config::frameRateLimit_hosting));
             }
+            else if (frameLimit > 1000) {
+                frameLimit = 1000;
+                GameConsole::WriteGameConsole(std::format(L" > maximum setting is 1000 FPS.", Config::frameRateLimit_hosting));
+            }
+#endif
             Config::frameRateLimit_client = frameLimit;
             Config::Serialize();
         }

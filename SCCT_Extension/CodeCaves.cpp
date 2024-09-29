@@ -330,13 +330,18 @@ __declspec(naked) void StickyCamContextMenuBlock() {
 
 static std::map<std::pair<std::wstring, std::wstring>, std::wstring> overrideMap;
 static void InitLabelOverrides() {
-    overrideMap[{L"TitlePage", L"LAN_Menu"}] = L"Redux Online Session";
-    overrideMap[{L"TitrePage.Caption", L"LAN_Menu"}] = L"Redux Online Session";
+    overrideMap[{L"TitlePage", L"LAN_Menu"}] = L"Reloaded Session";
+    overrideMap[{L"TitrePage.Caption", L"LAN_Menu"}] = L"Reloaded Session";
 
     overrideMap[{L"MainPage_Live.Caption", L"Menu_Multi"}] = L" ";
-    overrideMap[{L"MainPage_LAN.Caption", L"Menu_Multi"}] = L"Play Online";
+    overrideMap[{L"MainPage_LAN.Caption", L"Menu_Multi"}] = L"Play Multiplayer";
 
-    overrideMap[{L"TitlePage", L"Lobby_Create"}] = L"Redux Lobby";
+    //overrideMap[{L"TitlePage", L"Lobby_Create"}] = L"Versus Reloaded Lobby";
+    //overrideMap[{L"LabelCaption", L"No_Opti_Match_Found"}] = L"A new version of SCCT Redux is available||Upgrade to the latest version to see games again||Type 'upgrade' in console to open the download page";
+    //overrideMap[{L"TitrePage.Caption", L"LAN_Seek_Games_List"}] = L"";
+    //overrideMap[{L"TitlePage", L"LAN_Seek_Games_List"}] = L"";
+
+    //edi:sResolution ebp:Video_Settings result: ("640 x 480","800 x 600","1024 x 768","1280 x 1024","Native Resolution","1440 x 1080","1920 x 1080","1920 x 1440","2560 x 1440","2880 x 2160","3840 x 2160")
 
     overrideMap[{L"MouseSensitive.Caption", L"Controller_Settings"}] = L"Type sens in console for mouse sensitivity. Keep this at 40";
 }
