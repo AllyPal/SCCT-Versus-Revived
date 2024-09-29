@@ -61,6 +61,9 @@ void Config::Initialize(std::wstring& configFilePath) {
             configFile >> jsonConfig;
 
             frameRateLimit_client = jsonConfig.value("frameRateLimit_client", 60);
+#ifndef _DEBUG
+            frameRateLimit_client = std::clamp(frameRateLimit_client, 30, 1000);
+#endif
             frameRateLimit_hosting = jsonConfig.value("frameRateLimit_hosting", 60);
 #ifndef _DEBUG
             frameRateLimit_hosting = std::clamp(frameRateLimit_hosting, 30, 90);
