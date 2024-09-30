@@ -168,9 +168,9 @@ __declspec(naked) void ServerInfoBroadcast() {
     }
 }
 
-std::unordered_map<std::string, std::pair<uint32_t, uint16_t>> dnsCache;
+static std::unordered_map<std::string, std::pair<uint32_t, uint16_t>> dnsCache;
 
-std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dnsName) {
+static std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dnsName) {
     if (dnsCache.find(dnsName) != dnsCache.end()) {
         return dnsCache[dnsName];
     }
@@ -184,12 +184,14 @@ std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dnsName) 
     std::string hostname = dnsName.substr(0, colonPos);
     int port = std::stoi(dnsName.substr(colonPos + 1));
 
-    struct addrinfo hints, * res;
+    struct addrinfo hints, *res;
     std::memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    if (getaddrinfo(hostname.c_str(), nullptr, &hints, &res) != 0) {
+    int status = getaddrinfo(hostname.c_str(), nullptr, &hints, &res);
+    if (status != 0) {
+        std::wcerr << "getaddrinfo error: " << gai_strerror(status) << std::endl;     
         return { 0, 0 };
     }
 
@@ -318,9 +320,26 @@ __declspec(naked) void InterceptMasterServerPacket() {
     }
 }
 
+void CacheMasterServerIp() {
+    // just to fill cache
+    std::cout << "Caching master server ip" << std::endl;
+    WSADATA wsaData;
+    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (result != 0) {
+        std::cerr << "WSAStartup failed: " << result << std::endl;
+        return; 
+    }
+    auto mst = ConvertDnsToIpAndPort(Config::masterServerDns);
+    WSACleanup();
+    std::cout << "Caching master server ip done: " << mst.first << ":" << mst.second << std::endl;
+}
+
 void Networking::Initialize()
 {
     MemoryWriter::WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     MemoryWriter::WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
     MemoryWriter::WriteJump(InterceptMasterServerPacketEntry, InterceptMasterServerPacket);
+    std::thread cacheThread(CacheMasterServerIp);
+    cacheThread.detach();
+
 }
