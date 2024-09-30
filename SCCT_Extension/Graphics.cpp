@@ -100,6 +100,20 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
         }
     }
 
+    //if (caps->MaxAnisotropy != 0) {
+    //    UINT qualityLevels;
+
+    //    auto result = d3d->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT,
+    //        D3DDEVTYPE_HAL,
+    //        d3dppReplacement.BackBufferFormat, // Example format
+    //        d3dppReplacement.Windowed,           // Windowed mode
+    //        D3DMULTISAMPLE_16_SAMPLES);
+    //    if (SUCCEEDED(result)) {
+    //        d3dppReplacement.MultiSampleType = D3DMULTISAMPLE_16_SAMPLES;
+    //        
+    //    }
+    //}
+
     BackBufferWidth = d3dppReplacement.BackBufferWidth;
     BackBufferHeight = d3dppReplacement.BackBufferHeight;
     overriddenD3dpp = &d3dppReplacement;
@@ -253,7 +267,6 @@ void PrintD3DCAPS8(D3DCAPS8 caps) {
 int D3D8CapsEntry = 0x1095BA7B;
 __declspec(naked) void D3D8Caps() {
     static int Return = 0x1095BA93;
-    static D3DCAPS8* caps;
     __asm {
         lea edx, [ebp + 0x0000413C]
         mov [caps], edx
