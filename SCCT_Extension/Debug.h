@@ -4,4 +4,3 @@ class Debug
 public:
     static void Initialize();
 };
-//test
