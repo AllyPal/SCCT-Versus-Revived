@@ -8,6 +8,7 @@
 #include "GameConsole.h"
 #include "Graphics.h"
 #include "Networking.h"
+#include "Debug.h"
 
 INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
 
@@ -61,6 +62,10 @@ BOOL CALLBACK InitFunction(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
     GameConsole::Initialize();
     Input::Initialize();
     CodeCaves::Initialize();
+
+#ifdef _DEBUG
+    Debug::Initialize();
+#endif
 
     return TRUE;
 }

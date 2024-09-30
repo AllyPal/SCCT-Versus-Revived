@@ -85,6 +85,7 @@
   <ItemGroup>
     <ClInclude Include="CodeCaves.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="Debug.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameConsole.h" />
@@ -100,6 +101,7 @@
   <ItemGroup>
     <ClCompile Include="CodeCaves.cpp" />
     <ClCompile Include="Config.cpp" />
+    <ClCompile Include="Debug.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GameConsole.cpp" />
     <ClCompile Include="Graphics.cpp" />
