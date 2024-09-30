@@ -17,6 +17,7 @@
 
 static IDirect3D8* d3d;
 static LPDIRECT3DDEVICE8 pDevice;
+static D3DCAPS8* caps;
 static int BackBufferWidth = 0;
 static int BackBufferHeight = 0;
 static int RenderWidth = 0;

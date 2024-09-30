@@ -12,6 +12,10 @@
 #include "GameStructs.h"
 #include "Config.h"
 
+static std::vector<std::string> ipPortList;
+
+std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dnsName);
+std::string convertToIpPortString(const uint32_t* ip, const uint16_t* port);
 //typedef wchar_t* (__cdecl* GetFriendlyErrorSig)(int Error);
 //
 //wchar_t* GetFriendlyError(int Error) {
@@ -62,6 +66,7 @@ int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t me
     to.sin_addr.s_addr = htonl(hostlong);
     int result = SendPacket(to, messagePtr, _socket, messageLength);
 
+    // TODO: retire
     if (Config::useDirectConnect) {
 #pragma warning(push)
 #pragma warning(disable: 4996)
@@ -74,7 +79,21 @@ int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t me
         }
     }
 
-    for (const auto& ipPortStr : Config::serverList) {
+    std::vector<std::string> combinedServerList;
+
+    static auto masterIpPort = ConvertDnsToIpAndPort(Config::masterServerDns);
+    if (masterIpPort.first != 0 && masterIpPort.second != 0) {
+        // very hacky swapping of ip representation - done for speed
+        uint32_t reversedIp = ntohl(masterIpPort.first);
+        uint16_t reversedPort = ntohs(masterIpPort.second);
+        auto masterServerIpString = convertToIpPortString(&reversedIp, &reversedPort);
+        combinedServerList.push_back(masterServerIpString);
+    }
+
+    combinedServerList.insert(combinedServerList.end(), ipPortList.begin(), ipPortList.end());
+    combinedServerList.insert(combinedServerList.end(), Config::serverList.begin(), Config::serverList.end());
+
+    for (const auto& ipPortStr : combinedServerList) {
         size_t colonPos = ipPortStr.find(':');
         if (colonPos == std::string::npos) {
             std::cerr << "Invalid IP:PORT format: " << ipPortStr << std::endl;
@@ -157,6 +176,7 @@ std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dnsName) 
     }
 
     size_t colonPos = dnsName.find(':');
+
     if (colonPos == std::string::npos) {
         return { 0, 0 };
     }
@@ -189,18 +209,58 @@ std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dnsName) 
     return { ntohl(ipAddr), port };
 }
 
-void handleListPacket(std::wstring packetId, wchar_t* buffer, uint32_t recvBytes) {
-    std::cout << "Server list packet: " << StringOperations::WStringToString(packetId) << std::endl;
-    if (sizeof(packetId) == recvBytes) {
-        std::cout << "Server list is empty" << std::endl;
-    }
+std::string convertToIpPortString(const uint32_t* ip, const uint16_t* port) {
+    char ip_str[INET_ADDRSTRLEN];  // Buffer for storing the string representation of the IP address
+
+    // Convert IP from binary to string using inet_ntop (IPv4)
+    struct in_addr ip_addr;
+    ip_addr.s_addr = *ip;
+    inet_ntop(AF_INET, &ip_addr, ip_str, INET_ADDRSTRLEN);
+
+    // Convert port from network byte order to host byte order
+    uint16_t port_host_order = ntohs(*port);
+
+    // Create the "IP:PORT" string
+    std::ostringstream oss;
+    oss << ip_str << ":" << port_host_order;
+
+    return oss.str();
 }
 
-void handleOther(std::wstring packetId, wchar_t* buffer) {
+void handleListPacket(std::wstring packetId, uint8_t* buffer, uint32_t recvBytes) {
+    const size_t ipPortSize = 6;
+    std::cout << "Server list packet: " << StringOperations::WStringToString(packetId) << std::endl;
+    const int ipDataOffset = 24;
+    if (ipDataOffset >= recvBytes) {
+        std::cout << "Server list is empty" << std::endl;
+        return;
+    }
+
+    if ((recvBytes - ipDataOffset) % ipPortSize != 0) {
+        std::cout << "Invalid payload" << std::endl;
+        return;
+    }
+
+    ipPortList.clear();
+
+    // Process the buffer
+    for (size_t i = 0; i < recvBytes - ipDataOffset; i += ipPortSize) {
+        uint32_t* ip = reinterpret_cast<uint32_t*>(&buffer[ipDataOffset + i]);
+        uint16_t* port = reinterpret_cast<uint16_t*>(&buffer[ipDataOffset + i + 4]);
+
+        // Convert IP and port to "IP:PORT" string
+        std::string ipPortStr = convertToIpPortString(ip, port);
+        std::cout << ipPortStr << std::endl;
+        // Add the string to the vector
+        ipPortList.push_back(ipPortStr);
+}
+}
+
+void handleOther(std::wstring packetId, uint8_t* buffer) {
     std::cout << "Unknown master server packet: " << StringOperations::WStringToString(packetId) << std::endl;
 }
 
-void handlePacket(uint32_t clientIP, uint16_t clientPort, uint32_t recvBytes, wchar_t* buffer) {
+void handlePacket(uint32_t clientIP, uint16_t clientPort, uint32_t recvBytes, uint8_t* buffer) {
     //struct in_addr ipAddr;
     //ipAddr.s_addr = htonl(clientIP);
 
@@ -212,10 +272,10 @@ void handlePacket(uint32_t clientIP, uint16_t clientPort, uint32_t recvBytes, wc
     std::cout << StringOperations::WStringToString(localWString) << std::endl;*/
 
     static auto masterIpPort = ConvertDnsToIpAndPort(Config::masterServerDns);
-    if (clientIP == masterIpPort.first && clientPort == masterIpPort.second && recvBytes >= 16) {
-        std::wstring packetId(buffer, 8);
+    if (clientIP == masterIpPort.first && clientPort == masterIpPort.second && recvBytes >= 24) {
+        std::wstring packetId(reinterpret_cast<const wchar_t*>(buffer), 8);
 
-        static std::unordered_map<std::wstring, std::function<void(std::wstring, wchar_t*, uint32_t)>> handlers = {
+        static std::unordered_map<std::wstring, std::function<void(std::wstring, uint8_t*, uint32_t)>> handlers = {
             {L"SCLILIST", handleListPacket},
         };
 
@@ -234,7 +294,7 @@ __declspec(naked) void InterceptMasterServerPacket() {
     static uint16_t clientPort;
     static uint32_t clientIP;
     static uint32_t recvBytes;
-    static wchar_t* buffer;
+    static uint8_t* buffer;
     __asm {
         movzx   ebx, ax
         mov [clientPort], ax
