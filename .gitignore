@@ -38,3 +38,6 @@ Debug/
 Release/
 x64/
 x86/
+
+scct_extension/debug.h
+scct_extension/debug.cpp
