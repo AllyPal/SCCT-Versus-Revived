@@ -27,5 +27,17 @@ public:
         ss << "0x" << std::hex << std::uppercase << address;
         return ss.str();
     }
+
+    static std::wstring toHexStringW(uintptr_t address) {
+        std::wstringstream ss;
+        ss << "0x" << std::hex << std::uppercase << address;
+        return ss.str();
+    }
+
+    static std::string toString(uintptr_t address) {
+        std::stringstream ss;
+        ss << address;
+        return ss.str();
+    }
 };
 
