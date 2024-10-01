@@ -45,7 +45,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     useDirectConnect = false;
     directConnectIp = L"";
     directConnectPort = L"";
-    masterServerDns = "scct-redux-master.duckdns.org:11000";
+    masterServerDns = "scct-reloaded.duckdns.org:11000";
     mouseInputFix = true;
     menuSensitivity = 0.25;
     baseMouseSensitivity = 1.0;
@@ -82,7 +82,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             security_acg = jsonConfig.value("security_acg", false);
             security_dep = jsonConfig.value("security_dep", true);
             disableStickyCamContextMenu = jsonConfig.value("disableStickyCamContextMenu", true);
-            masterServerDns = jsonConfig.value("masterServerDns", "scct-redux-master.duckdns.org:11000");
+            masterServerDns = jsonConfig.value("masterServerDns", "scct-reloaded.duckdns.org:11000");
 
             // Update the file with any new fields
             Serialize();
