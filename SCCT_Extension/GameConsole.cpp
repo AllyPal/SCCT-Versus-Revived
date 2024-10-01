@@ -13,6 +13,7 @@
 #include <map>
 #include <algorithm>
 #include "GameStructs.h"
+#include "Fonts.h"
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
@@ -20,27 +21,43 @@ void PrintConsoleHelp();
 void PrintConsoleValues();
 
 int getGraveAccentKeyCode() {
-    // Get the virtual key code for the grave accent (`)
     int vkCode = VkKeyScan('`');
-
-    // The lower byte contains the virtual key code, the upper byte contains shift/ctrl state
     return vkCode & 0xFF;
 }
+static Console* console;
 
-void OnConsoleCreated(Console* console) {
+void OnConsoleCreated() {
+    std::cout << "Console addr: " << console << std::endl;
     console->ConsoleKey() = getGraveAccentKeyCode();
-    auto myFontAddr = &console->bSayCommand();// MyFont();
-    std::cout << "FONT: " << myFontAddr << std::endl;
+}
+
+void OnToggleConsole() {
+    GUIFont* font = Fonts::GetFontByKeyName(L"GUIVerySmallDenFont");
+    if (font->FirstFontArray() != nullptr) {
+        console->MyFont() = *font->FirstFontArray();
+    }
+}
+
+static int ConsoleToggledEntry = 0x10C07768;
+__declspec(naked) void ConsoleToggled() {
+    static int Return = 0x1094A300;
+    __asm {
+        pushad
+    }
+    OnToggleConsole();
+    __asm {
+        popad
+        jmp dword ptr[Return]
+    }
 }
 
 static int ConsoleCreatedEntry = 0x109AB58B;
 __declspec(naked) void ConsoleCreated() {
-    static Console* console;
     __asm {
         pushad
         mov [console], esi
     }
-    OnConsoleCreated(console);
+    OnConsoleCreated();
     __asm {
         popad
         add     esp, 0x10
@@ -241,4 +258,5 @@ void GameConsole::Initialize()
     MemoryWriter::WriteJump(ConsoleInputEntry, ConsoleInput);
     MemoryWriter::WriteJump(setThisConsoleEntry, setThisConsole);
     MemoryWriter::WriteJump(ConsoleCreatedEntry, ConsoleCreated);
+    MemoryWriter::WriteFunctionPtr(ConsoleToggledEntry, ConsoleToggled);
 }

@@ -45,6 +45,18 @@ struct LvIn {
     }
 };
 
+struct GUIFont {
+    std::byte unspecified[0x1000];
+
+    wchar_t* KeyName() {
+        return *reinterpret_cast<wchar_t**>(unspecified + (0x2C));
+    }
+
+    uint32_t* FirstFontArray() {
+        return *reinterpret_cast<uint32_t**>(unspecified + (0x48));
+    }
+};
+
 struct Console {
     std::byte unspecified[0x1000];
     uint32_t& ConsoleKey() {
@@ -53,9 +65,5 @@ struct Console {
 
     uint32_t& MyFont() {
         return *reinterpret_cast<uint32_t*>(unspecified + (0x1E8));
-    }
-
-    uint32_t& bSayCommand() {
-        return *reinterpret_cast<uint32_t*>(unspecified + (0x1E0));
     }
 };

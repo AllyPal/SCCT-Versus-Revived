@@ -24,6 +24,31 @@ public:
         return true;
     }
 
+    static bool __cdecl WriteFunctionPtr(uintptr_t targetAddress, void(*function)()) {
+        Logger::log("Writing function pointer at " + StringOperations::toHexString(targetAddress));
+        uintptr_t functionAddress = reinterpret_cast<uintptr_t>(function);
+        uint32_t offset = static_cast<uint32_t>(functionAddress);
+
+        uint8_t offsetBytes[4];
+        *reinterpret_cast<uint32_t*>(offsetBytes) = static_cast<uint32_t>(offset);
+
+        DWORD oldProtect;
+        if (!VirtualProtect(reinterpret_cast<LPVOID>(targetAddress), sizeof(offsetBytes), PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            Logger::log("Failed to change memory protection");
+            return false;
+        }
+
+        memcpy(reinterpret_cast<void*>(targetAddress), offsetBytes, sizeof(offsetBytes));
+        if (!VirtualProtect(reinterpret_cast<LPVOID>(targetAddress), sizeof(offsetBytes), oldProtect, &oldProtect)) {
+            Logger::log("Failed to restore memory protection");
+            return false;
+        }
+
+        FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<LPCVOID>(targetAddress), sizeof(offsetBytes));
+        Logger::log("Finished writing function pointer at " + StringOperations::toHexString(targetAddress));
+        return true;
+    }
+
     static bool __cdecl WriteJump(uintptr_t targetAddress, void(*function)()) {
         Logger::log("Writing jump at " + StringOperations::toHexString(targetAddress));
         uintptr_t functionAddress = reinterpret_cast<uintptr_t>(function);
