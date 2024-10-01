@@ -12,11 +12,41 @@
 #include <functional>
 #include <map>
 #include <algorithm>
+#include "GameStructs.h"
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
 void PrintConsoleHelp();
 void PrintConsoleValues();
+
+int getGraveAccentKeyCode() {
+    // Get the virtual key code for the grave accent (`)
+    int vkCode = VkKeyScan('`');
+
+    // The lower byte contains the virtual key code, the upper byte contains shift/ctrl state
+    return vkCode & 0xFF;
+}
+
+void OnConsoleCreated(Console* console) {
+    console->ConsoleKey() = getGraveAccentKeyCode();
+    auto myFontAddr = &console->bSayCommand();// MyFont();
+    std::cout << "FONT: " << myFontAddr << std::endl;
+}
+
+static int ConsoleCreatedEntry = 0x109AB58B;
+__declspec(naked) void ConsoleCreated() {
+    static Console* console;
+    __asm {
+        pushad
+        mov [console], esi
+    }
+    OnConsoleCreated(console);
+    __asm {
+        popad
+        add     esp, 0x10
+        ret
+    }
+}
 
 static int thisConsole = 0;
 int setThisConsoleEntry = 0x10B0F15E;
@@ -210,4 +240,5 @@ void GameConsole::Initialize()
 {
     MemoryWriter::WriteJump(ConsoleInputEntry, ConsoleInput);
     MemoryWriter::WriteJump(setThisConsoleEntry, setThisConsole);
+    MemoryWriter::WriteJump(ConsoleCreatedEntry, ConsoleCreated);
 }
