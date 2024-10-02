@@ -350,12 +350,6 @@ __declspec(naked) void InterceptMasterServerPacket() {
 static std::chrono::steady_clock::time_point nextNetUpdateTime;
 static void LongIntervalNetcode() {
     if (nextNetUpdateTime < Graphics::lastFrameTime) {
-        wchar_t* inLan = CodeCaves::lvIn->sGaIn()->InLAN();
-        auto port = CodeCaves::lvIn->sGaIn()->IamLANServer()->Port();
-        std::wcout << inLan << std::endl;
-        std::cout << port << std::endl;
-
-
         static auto masterIpPort = GetOrCacheDnsIpThreaded(Config::masterServerDns);
         if (masterIpPort.first != 0 && masterIpPort.second != 0) {            
             SOCKET socket = CodeCaves::lvIn->sGaIn()->IamLANServer()->Socket();
