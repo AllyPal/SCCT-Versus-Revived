@@ -27,14 +27,23 @@ int getGraveAccentKeyCode() {
 static Console* console;
 
 void OnConsoleCreated() {
-    std::cout << "Console addr: " << console << std::endl;
     console->ConsoleKey() = getGraveAccentKeyCode();
 }
 
+static bool initialized = false;
 void OnToggleConsole() {
+    if (initialized) return;
     GUIFont* font = Fonts::GetFontByKeyName(L"GUIVerySmallDenFont");
     if (font->FirstFontArray() != nullptr) {
         console->MyFont() = *font->FirstFontArray();
+
+        GameConsole::WriteGameConsole(L"======================");
+        GameConsole::WriteGameConsole(L"SCCT Versus Reloaded vI");
+        GameConsole::WriteGameConsole(L"======================");
+        GameConsole::WriteGameConsole(L" ");
+        GameConsole::WriteGameConsole(L"Type 'help' to view the command list");
+
+        initialized = true;
     }
 }
 
