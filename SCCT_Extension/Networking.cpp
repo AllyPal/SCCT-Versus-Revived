@@ -371,7 +371,7 @@ static void LongIntervalNetcode() {
             }
         }
 
-        nextNetUpdateTime = Graphics::lastFrameTime + std::chrono::seconds(15);
+        nextNetUpdateTime = Graphics::lastFrameTime + std::chrono::seconds(60);
     }
 }
 
