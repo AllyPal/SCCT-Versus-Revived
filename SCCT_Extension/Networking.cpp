@@ -69,6 +69,9 @@ int SendPacket(sockaddr_in& to, uintptr_t messagePtr, SOCKET _socket, int messag
 
     return result;
 }
+
+static std::chrono::steady_clock::time_point nextServerListUpdateTime;
+
 int result;
 int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t messagePtr, int messageLength) {
     struct sockaddr_in to;
@@ -96,12 +99,18 @@ int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t me
     std::vector<std::string> combinedServerList;
 
     static auto masterIpPort = GetOrCacheDnsIpThreaded(Config::masterServerDns);
-    if (masterIpPort.first != 0 && masterIpPort.second != 0) {
+    if (masterIpPort.first != 0 && masterIpPort.second != 0 && nextServerListUpdateTime < Graphics::lastFrameTime) {
+        nextServerListUpdateTime = Graphics::lastFrameTime + std::chrono::seconds(4);
         // very hacky swapping of ip representation - done for speed
         uint32_t reversedIp = ntohl(masterIpPort.first);
         uint16_t reversedPort = ntohs(masterIpPort.second);
         auto masterServerIpString = convertToIpPortString(&reversedIp, &reversedPort);
         combinedServerList.push_back(masterServerIpString);
+
+        std::cout << "Requesting server list" << std::endl;
+    }
+    else {
+        std::cout << "Not requesting server list" << std::endl;
     }
 
     combinedServerList.insert(combinedServerList.end(), ipPortList.begin(), ipPortList.end());
