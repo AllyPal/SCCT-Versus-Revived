@@ -6,11 +6,14 @@
 #include <set>
 #include <timeapi.h>
 #include <Windows.h>
+#include <chrono>
 #include "StringOperations.h"
 #include "MemoryWriter.h"
 #include "Input.h"
 #include "GameStructs.h"
 #include "Config.h"
+#include "Graphics.h"
+#include "CodeCaves.h"
 
 static std::pair<uint32_t, uint16_t> GetCachedDnsIp(const std::string& dnsName);
 static void CacheDnsIp(const std::string& dnsName);
@@ -335,6 +338,60 @@ __declspec(naked) void InterceptMasterServerPacket() {
     }
 }
 
+static std::chrono::steady_clock::time_point nextNetUpdateTime;
+static void LongIntervalNetcode() {
+    if (nextNetUpdateTime < Graphics::lastFrameTime) {
+        wchar_t* inLan = CodeCaves::lvIn->sGaIn()->InLAN();
+        auto port = CodeCaves::lvIn->sGaIn()->IamLANServer()->Port();
+        std::wcout << inLan << std::endl;
+        std::cout << port << std::endl;
+
+
+        static auto masterIpPort = GetOrCacheDnsIpThreaded(Config::masterServerDns);
+        if (masterIpPort.first != 0 && masterIpPort.second != 0) {            
+            SOCKET socket = CodeCaves::lvIn->sGaIn()->IamLANServer()->Socket();
+
+            const wchar_t* message = L"SCLIREGI";
+            sockaddr_in serverAddr;
+            serverAddr.sin_family = AF_INET;
+            serverAddr.sin_addr.s_addr = ntohl(masterIpPort.first);
+            serverAddr.sin_port = ntohs(masterIpPort.second);
+
+            char ip[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &(serverAddr.sin_addr), ip, INET_ADDRSTRLEN);
+            uint16_t port = ntohs(serverAddr.sin_port);
+            std::cout << "Sending master server packet to " << ip << ":" << port << std::endl;
+
+            int result = sendto(socket, (const char*)message, wcslen(message) * sizeof(wchar_t), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
+            if (result == SOCKET_ERROR) {
+                std::cerr << "sendto failed with error: " << WSAGetLastError() << std::endl;
+            }
+            else {
+                std::cout << "Packet sent successfully!" << std::endl;
+            }
+        }
+
+        nextNetUpdateTime = Graphics::lastFrameTime + std::chrono::seconds(15);
+    }
+}
+
+static void OnLanFrame() {
+    LongIntervalNetcode();
+}
+
+static int RunOncePerServerLanFrameEntry = 0x10BF8D48;
+__declspec(naked) void RunOncePerServerLanFrame() {
+    static int Return = 0x10A29470;
+    __asm {
+        pushad
+    }
+    OnLanFrame();
+    __asm {
+        popad
+        jmp dword ptr[Return]
+    }
+}
+
 void CacheMasterServerIpStartup() {
     std::cout << "Caching master server ip" << std::endl;
     WSADATA wsaData;
@@ -352,6 +409,7 @@ void Networking::Initialize()
     MemoryWriter::WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     MemoryWriter::WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
     MemoryWriter::WriteJump(InterceptMasterServerPacketEntry, InterceptMasterServerPacket);
+    MemoryWriter::WriteFunctionPtr(RunOncePerServerLanFrameEntry, RunOncePerServerLanFrame);
     std::thread cacheThread(CacheMasterServerIpStartup);
     cacheThread.detach();
 }

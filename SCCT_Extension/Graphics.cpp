@@ -656,7 +656,7 @@ __declspec(naked) void removeClientFpsCap() {
 }
 
 std::chrono::steady_clock::time_point nextFrameTime;
-std::chrono::steady_clock::time_point lastFrameTime;
+std::chrono::steady_clock::time_point Graphics::lastFrameTime;
 void UpdateLastFrameRenderedTime() {
     double frameRateLimit;
     if (CodeCaves::IsListenServer()) {
@@ -670,7 +670,7 @@ void UpdateLastFrameRenderedTime() {
         std::chrono::duration<double>((double)1.0 / frameRateLimit)
     ).count();
 
-    lastFrameTime = nextFrameTime;
+    Graphics::lastFrameTime = nextFrameTime;
     nextFrameTime = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(frameTimeNanoseconds);
 }
 
