@@ -12,9 +12,20 @@
 #include "GameStructs.h"
 #include "Config.h"
 
+static std::pair<uint32_t, uint16_t> GetCachedDnsIp(const std::string& dnsName);
+static void CacheDnsIp(const std::string& dnsName);
+
 static std::vector<std::string> ipPortList;
 
-std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dnsName);
+static std::pair<uint32_t, uint16_t> GetOrCacheDnsIpThreaded(const std::string& dnsName) {
+    auto ip = GetCachedDnsIp(dnsName);
+    if (ip.first == 0 || ip.second == 0) {
+        std::thread cacheThread(CacheDnsIp, dnsName);
+        cacheThread.detach();
+    }
+    return ip;
+}
+
 std::string convertToIpPortString(const uint32_t* ip, const uint16_t* port);
 //typedef wchar_t* (__cdecl* GetFriendlyErrorSig)(int Error);
 //
@@ -81,7 +92,7 @@ int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t me
 
     std::vector<std::string> combinedServerList;
 
-    static auto masterIpPort = ConvertDnsToIpAndPort(Config::masterServerDns);
+    static auto masterIpPort = GetOrCacheDnsIpThreaded(Config::masterServerDns);
     if (masterIpPort.first != 0 && masterIpPort.second != 0) {
         // very hacky swapping of ip representation - done for speed
         uint32_t reversedIp = ntohl(masterIpPort.first);
@@ -170,15 +181,19 @@ __declspec(naked) void ServerInfoBroadcast() {
 
 static std::unordered_map<std::string, std::pair<uint32_t, uint16_t>> dnsCache;
 
-static std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dnsName) {
+static std::pair<uint32_t, uint16_t> GetCachedDnsIp(const std::string& dnsName) {
     if (dnsCache.find(dnsName) != dnsCache.end()) {
         return dnsCache[dnsName];
     }
+    return { 0, 0 };
+}
 
+static void CacheDnsIp(const std::string& dnsName) {
+    std::cout << "Caching dns: " << dnsName << std::endl;
     size_t colonPos = dnsName.find(':');
 
     if (colonPos == std::string::npos) {
-        return { 0, 0 };
+        return;
     }
 
     std::string hostname = dnsName.substr(0, colonPos);
@@ -192,7 +207,7 @@ static std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dn
     int status = getaddrinfo(hostname.c_str(), nullptr, &hints, &res);
     if (status != 0) {
         std::wcerr << "getaddrinfo error: " << gai_strerror(status) << std::endl;     
-        return { 0, 0 };
+        return;
     }
 
     struct sockaddr_in* ipv4 = reinterpret_cast<struct sockaddr_in*>(res->ai_addr);
@@ -203,12 +218,12 @@ static std::pair<uint32_t, uint16_t> ConvertDnsToIpAndPort(const std::string& dn
     uint32_t ipAddr;
     if (inet_pton(AF_INET, ipStr, &ipAddr) != 1) {
         freeaddrinfo(res);
-        return { 0, 0 };
+        return;
     }
     freeaddrinfo(res);
 
     dnsCache[dnsName] = { ntohl(ipAddr), port };
-    return { ntohl(ipAddr), port };
+    std::cout << "IP cached fo " << dnsName << std::endl;
 }
 
 std::string convertToIpPortString(const uint32_t* ip, const uint16_t* port) {
@@ -273,7 +288,7 @@ void handlePacket(uint32_t clientIP, uint16_t clientPort, uint32_t recvBytes, ui
     std::wstring localWString(buffer, recvBytes/2);
     std::cout << StringOperations::WStringToString(localWString) << std::endl;*/
 
-    static auto masterIpPort = ConvertDnsToIpAndPort(Config::masterServerDns);
+    static auto masterIpPort = GetOrCacheDnsIpThreaded(Config::masterServerDns);
     if (clientIP == masterIpPort.first && clientPort == masterIpPort.second && recvBytes >= 24) {
         std::wstring packetId(reinterpret_cast<const wchar_t*>(buffer), 8);
 
@@ -320,8 +335,7 @@ __declspec(naked) void InterceptMasterServerPacket() {
     }
 }
 
-void CacheMasterServerIp() {
-    // just to fill cache
+void CacheMasterServerIpStartup() {
     std::cout << "Caching master server ip" << std::endl;
     WSADATA wsaData;
     int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -329,9 +343,8 @@ void CacheMasterServerIp() {
         std::cerr << "WSAStartup failed: " << result << std::endl;
         return; 
     }
-    auto mst = ConvertDnsToIpAndPort(Config::masterServerDns);
+    CacheDnsIp(Config::masterServerDns);
     WSACleanup();
-    std::cout << "Caching master server ip done: " << mst.first << ":" << mst.second << std::endl;
 }
 
 void Networking::Initialize()
@@ -339,7 +352,6 @@ void Networking::Initialize()
     MemoryWriter::WriteJump(sendBroadcastLanMessageEntry, sendBroadcastLanMessage);
     MemoryWriter::WriteJump(ServerInfoBroadcastEntry, ServerInfoBroadcast);
     MemoryWriter::WriteJump(InterceptMasterServerPacketEntry, InterceptMasterServerPacket);
-    std::thread cacheThread(CacheMasterServerIp);
+    std::thread cacheThread(CacheMasterServerIpStartup);
     cacheThread.detach();
-
 }
