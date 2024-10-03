@@ -3,25 +3,22 @@
 Enhancements and fixes for Splinter Cell Chaos Theory (SCCT) Versus.
 
 ## Features:
+* Allows players to connect to other players over the internet (without a VPN)
+* Adds a master server
+* Fixes the flashlight rendering bug without the need to use 3DAnalyze or dgvoodoo
 * Allows users to set a frame limit (no longer capped at 64 FPS on Windows with SCCT Frame Rate Editor/Framer)
-* Allows users to specify a different frame rate limit when hosting.  Currently hosting above 60 fps is not recommended (up from 31 on the stock game)
-* Fixes mouse input at high hz and produces an identical experience at high and low FPS
-* Fixes animated textures/shaders (e.g. the water effect on Aquarius) that run too fast at higher frame rates.  Textures/shaders which already specify a limit will retain their original cap
+* Allows users to specify a different frame rate limit when hosting.  Currently hosting above 90 fps is not recommended (up from 31 on the stock game)
 * Fixes issue where grenades (frag, chaff, smoke etc) intermittently instantly explode on impact with the floor
-* Fixes widescreen aspect ratio (stretched look)
+* Replaces the mouse input system - now works above 125hz, removes negative acceleration and is no longer affected by frame rate
+* Fixes animated textures/shaders (e.g. the water effect on Aquarius) that run too fast at higher frame rates.  Textures/shaders which already specify a limit will retain their original cap
+* Adds widescreen support up to 16:9 aspect ratio without making the 3d image look stretched
+* Fixes stretched icons on Enhanced Reality with widescreen
 * FOV dynamically adjusts to give a consistent vertical view at all aspect ratios
-* Improved frame timing for more consistent frame rate.  Configurable with `frameTimingMode`:
-  * "0" highest CPU usage, highest compatibility
-  * "1" lower CPU usage
-  * "2" lowest precision (closest to original game)
-* Adds `-join <ip:port>` command to allow joining servers without a VPN.  
-
-  The server must be using SCCT-Versus-Revived, but does not need a command line.
-
-  1. On the client, launch the game with `-join` in your command line (e.g. `SCCT_Launcher.exe -join 192.168.50.142:7776`)
-  2. Select "Play on LAN" -> "Find A Session"
-
-  For now, using `-join` will disable automatic LAN game discovery.
+* Improved frame timing for more consistent frame rate
+* The config file has a "serverList" section, which allows users to enter a list of IP addresses.  This means people can play even if the new master server goes away
+* Fixes bug where holding forwards or backwards whilst attempting to fire a sticky cam would sometimes view the previous camera or do nothing
+* Adds numerous commands to the console to configure your game (type 'help' in the console to see the full list)
+* 
 
 ## Installation
 * Unzip files into the root directory of SCCT Versus
