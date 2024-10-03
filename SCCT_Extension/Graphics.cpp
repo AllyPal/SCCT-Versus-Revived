@@ -922,6 +922,15 @@ __declspec(naked) void AddEnhancedGuiResolutions() {
     }
 }
 
+static int lodOverrideEntry = 0x109BF1BD;
+__declspec(naked) void lodOverride() {
+    static int Return = 0x109BF1C3;
+    __asm {
+        fmul dword ptr[Config::lod]
+        jmp dword ptr[Return]
+    }
+}
+
 void Graphics::Initialize()
 {
     if (Config::applyAnimationFix)
@@ -961,4 +970,6 @@ void Graphics::Initialize()
         MemoryWriter::WriteBytes(0x1095BEC8, d3dTypeRef, sizeof(d3dTypeRef));
         MemoryWriter::WriteBytes(0x1095BF40, d3dTypeRef, sizeof(d3dTypeRef));
     }
+
+    MemoryWriter::WriteJump(lodOverrideEntry, lodOverride);
 }

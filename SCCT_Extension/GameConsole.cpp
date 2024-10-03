@@ -207,6 +207,26 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
             PrintConsoleValues();
         }
     };
+
+    commandHandlers[L"lod"] = {
+            std::format(L"<number> - higher numbers increase model detail at distance.", Config::lod),
+            [](const std::wstring& arg) {
+            if (!arg.empty()) {
+                auto lod = std::stof(arg);
+#ifndef _DEBUG
+                if (lod < 1.0) {
+                    lod = 1.0;
+                    GameConsole::WriteGameConsole(std::format(L" > minimum setting 1.0 (SCCT Versus Default)", Config::frameRateLimit_hosting));
+                }
+#endif
+                Config::lod = lod;
+                Config::Serialize();
+            }
+            GameConsole::WriteGameConsole(std::format(L" > lod {:.3f}", Config::lod));
+            },
+            std::format(L" lod {:.3f}", Config::baseMouseSensitivity)
+    };
+
     return commandHandlers;
 }
 

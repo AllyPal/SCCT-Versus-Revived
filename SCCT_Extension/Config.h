@@ -30,6 +30,8 @@ public:
     static float baseMouseSensitivity;
     static float menuSensitivity;
 
+    static float lod;
+
     // Constructor to initialize the config from a wide string path
     static void Initialize(std::wstring& configFilePath);
     static void ProcessCommandLine();

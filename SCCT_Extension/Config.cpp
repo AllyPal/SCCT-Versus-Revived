@@ -29,6 +29,8 @@ bool Config::security_acg;
 bool Config::security_dep;
 bool Config::disableStickyCamContextMenu;
 
+float Config::lod;
+
 std::vector<std::string> Config::serverList;
 
 void Config::Initialize(std::wstring& configFilePath) {
@@ -52,6 +54,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     security_acg = false;
     security_dep = true;
     disableStickyCamContextMenu = true;
+    lod = 3.0;
 
     std::ifstream configFile(configFilePathRef);
 
@@ -83,6 +86,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             security_dep = jsonConfig.value("security_dep", true);
             disableStickyCamContextMenu = jsonConfig.value("disableStickyCamContextMenu", true);
             masterServerDns = jsonConfig.value("masterServerDns", "scct-reloaded.duckdns.org:11000");
+            lod = jsonConfig.value("lod", 3.0);
 
             // Update the file with any new fields
             Serialize();
@@ -160,6 +164,7 @@ bool Config::Serialize() {
             jsonConfig["security_dep"] = security_dep;
             jsonConfig["disableStickyCamContextMenu"] = disableStickyCamContextMenu;
             jsonConfig["masterServerDns"] = masterServerDns;
+            jsonConfig["lod"] = lod;
 
             configFile << jsonConfig.dump(4);
             return true;
