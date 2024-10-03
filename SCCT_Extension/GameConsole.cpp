@@ -21,8 +21,10 @@ void PrintConsoleHelp();
 void PrintConsoleValues();
 
 int getGraveAccentKeyCode() {
-    int vkCode = VkKeyScan('`');
-    return vkCode & 0xFF;
+    UINT backtickscanCode = 0x29;
+    HKL layout = GetKeyboardLayout(0);
+    UINT vKey = MapVirtualKeyEx(backtickscanCode, MAPVK_VSC_TO_VK, layout);
+    return vKey & 0xFF;
 }
 static Console* console;
 

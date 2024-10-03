@@ -355,7 +355,7 @@ void PrintTextEntry(wchar_t* _eax, wchar_t* _edi, wchar_t* _ebp, wchar_t* result
 
 wchar_t* OverrideLabel(wchar_t* languageName, wchar_t* controlName, wchar_t* menuName, wchar_t* current) {
 #ifdef _DEBUG
-    PrintTextEntry(languageName, controlName, menuName, current);
+    // PrintTextEntry(languageName, controlName, menuName, current);
 #endif
     std::wstring controlKey(controlName);
     std::wstring menuKey(menuName);
