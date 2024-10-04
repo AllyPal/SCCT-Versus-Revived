@@ -224,7 +224,7 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
             }
             GameConsole::WriteGameConsole(std::format(L" > lod {:.3f}", Config::lod));
             },
-            std::format(L" lod {:.3f}", Config::baseMouseSensitivity)
+            std::format(L" lod {:.3f}", Config::lod)
     };
 
     return commandHandlers;
