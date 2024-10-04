@@ -18,7 +18,7 @@ Enhancements and fixes for Splinter Cell Chaos Theory (SCCT) Versus.
 * The config file has a "serverList" section, which allows users to enter a list of IP addresses.  This means people can play even if the new master server goes away
 * Fixes bug where holding forwards or backwards whilst attempting to fire a sticky cam would sometimes view the previous camera or do nothing
 * Adds numerous commands to the console to configure your game (type 'help' in the console to see the full list)
-* 
+* Fixes bug where the game runs much faster and causes severe lag when the host is alt-tabbed
 
 ## Installation
 * Unzip files into the root directory of SCCT Versus
