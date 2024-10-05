@@ -94,3 +94,15 @@ struct Console {
         return *reinterpret_cast<uint32_t*>(unspecified + (0x1E8));
     }
 };
+
+struct FragGrenade {
+    std::byte unspecified[0x1000];
+
+    float& Timer() {
+        return *reinterpret_cast<float*>(unspecified + (0x1D0));
+    }
+
+    uint32_t& Flags() {
+        return *reinterpret_cast<uint32_t*>(unspecified + (0x2F0));
+    }
+};

@@ -397,18 +397,18 @@ __declspec(naked) void LoadText() {
     }
 }
 
-static void FragCreated(SProjFrag* frag) {
-    if (frag->TimerCounter() < 0.01f) {
-        frag->bCollideActors() &= ~0x1000;
+static void FragCreated(FragGrenade* frag) {
+    if (frag->Timer() < 0.01f) {
+        frag->Flags() &= ~0x1000;
     }
     else {
-        frag->bCollideActors() |= 0x1000;
+        frag->Flags() |= 0x1000;
     }
 }
 
 static int FragCreatedEntry = 0x10AF0443;
 __declspec(naked) void FragCreated() {
-    static SProjFrag* frag;
+    static FragGrenade* frag;
     __asm {
         pushad
         mov [frag], eax
@@ -423,7 +423,7 @@ __declspec(naked) void FragCreated() {
 static int FragUpdatedEntry = 0x10BFAC14;
 __declspec(naked) void FragUpdated() {
     static int Return = 0x10AB8990;
-    static SProjFrag* frag;
+    static FragGrenade* frag;
     __asm {
         mov [frag], ecx
         pushad
