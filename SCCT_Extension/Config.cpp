@@ -86,7 +86,7 @@ void Config::Initialize(std::wstring& configFilePath) {
             security_dep = jsonConfig.value("security_dep", true);
             disableStickyCamContextMenu = jsonConfig.value("disableStickyCamContextMenu", true);
             masterServerDns = jsonConfig.value("masterServerDns", "scct-reloaded.duckdns.org:11000");
-            lod = jsonConfig.value("lod", 3.0);
+            lod = jsonConfig.value("lod", 10.0);
             if (lod < 1.0) {
                 lod = 1.0;
             }
