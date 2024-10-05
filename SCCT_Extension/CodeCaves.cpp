@@ -348,14 +348,13 @@ static void InitLabelOverrides() {
 
 void PrintTextEntry(wchar_t* _eax, wchar_t* _edi, wchar_t* _ebp, wchar_t* result) {
     if (result != nullptr) {
-        // No need to dereference the pointers, just pass them directly
         std::wcout << std::format(L"eax:{} edi:{} ebp:{} result: {}", _eax, _edi, _ebp, result) << std::endl;
     }
 }
 
 wchar_t* OverrideLabel(wchar_t* languageName, wchar_t* controlName, wchar_t* menuName, wchar_t* current) {
 #ifdef _DEBUG
-    // PrintTextEntry(languageName, controlName, menuName, current);
+    //PrintTextEntry(languageName, controlName, menuName, current);
 #endif
     std::wstring controlKey(controlName);
     std::wstring menuKey(menuName);
@@ -398,11 +397,52 @@ __declspec(naked) void LoadText() {
     }
 }
 
+static void FragCreated(SProjFrag* frag) {
+    if (frag->TimerCounter() < 0.01f) {
+        frag->bCollideActors() &= ~0x1000;
+    }
+    else {
+        frag->bCollideActors() |= 0x1000;
+    }
+}
+
+static int FragCreatedEntry = 0x10AF0443;
+__declspec(naked) void FragCreated() {
+    static SProjFrag* frag;
+    __asm {
+        pushad
+        mov [frag], eax
+    }
+    FragCreated(frag);
+    __asm {
+        popad
+        ret
+    }
+}
+
+static int FragUpdatedEntry = 0x10BFAC14;
+__declspec(naked) void FragUpdated() {
+    static int Return = 0x10AB8990;
+    static SProjFrag* frag;
+    __asm {
+        mov [frag], ecx
+        pushad
+    }
+    FragCreated(frag);
+    __asm {
+        popad
+        jmp dword ptr[Return]
+    }
+}
+
 void CodeCaves::Initialize()
 {
     InitLabelOverrides();
 
     MemoryWriter::WriteJump(InstaFixEntry, InstaFix);
+    MemoryWriter::WriteJump(FragCreatedEntry, FragCreated);
+    MemoryWriter::WriteFunctionPtr(FragUpdatedEntry, FragUpdated);
+
     MemoryWriter::WriteJump(SetLvInEntry, SetLvIn);
     MemoryWriter::WriteJump(OnStateChangeEntry, OnStateChange);
     MemoryWriter::WriteJump(LoadTextEntry, LoadText);
