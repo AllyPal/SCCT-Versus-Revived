@@ -398,7 +398,7 @@ __declspec(naked) void LoadText() {
 }
 
 static void FragCreated(FragGrenade* frag) {
-    if (frag->Timer() < 0.01f) {
+    if (frag->Timer() == 0.0f) {
         frag->Flags() &= ~0x1000;
     }
     else {
