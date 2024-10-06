@@ -62,14 +62,13 @@ void Config::Initialize(std::wstring& configFilePath) {
         try {
             nlohmann::json jsonConfig;
             configFile >> jsonConfig;
-
             frameRateLimit_client = jsonConfig.value("frameRateLimit_client", 60);
 #ifndef _DEBUG
-            frameRateLimit_client = std::clamp(frameRateLimit_client, 30, 1000);
+            frameRateLimit_client = std::clamp(frameRateLimit_client, frameRateLimit_client_min, frameRateLimit_client_max);
 #endif
             frameRateLimit_hosting = jsonConfig.value("frameRateLimit_hosting", 60);
 #ifndef _DEBUG
-            frameRateLimit_hosting = std::clamp(frameRateLimit_hosting, 30, 90);
+            frameRateLimit_hosting = std::clamp(frameRateLimit_hosting, frameRateLimit_hosting_min, frameRateLimit_hosting_max);
 #endif
             frameTimingMode = jsonConfig.value("frameTimingMode", 1);
             applyAnimationFix = jsonConfig.value("applyAnimationFix", true);

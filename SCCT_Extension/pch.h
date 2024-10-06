@@ -7,6 +7,10 @@
 #ifndef PCH_H
 #define PCH_H
 constexpr auto NOP = 0x90;
+constexpr int frameRateLimit_hosting_min = 30;
+constexpr int frameRateLimit_hosting_max = 165;
+constexpr int frameRateLimit_client_min = 30;
+constexpr int frameRateLimit_client_max = 1000;
 
 // add headers that you want to pre-compile here
 #include "framework.h"
