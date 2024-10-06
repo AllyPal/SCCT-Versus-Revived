@@ -1,4 +1,7 @@
 #pragma once
+#include <string>
+#include <map>
+
 class Debug
 {
 public:
