@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Debug.h"
 #include "MemoryWriter.h"
+#include <unordered_map>
 
 void Debug::Initialize() {
 }

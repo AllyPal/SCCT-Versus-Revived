@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include "logger.h"
+#include "GameConsole.h"
 #include <map>
 
 class Debug
