@@ -47,6 +47,21 @@ struct PlC {
     float& Sfv() {
         return *reinterpret_cast<float*>(unspecified + (0xA48));
     }
+
+    float& Sens() {
+        return *reinterpret_cast<float*>(unspecified + (0x5CC));
+    }
+    float& baz1() {
+        return *reinterpret_cast<float*>(unspecified + (0xACC));
+    }
+
+    float& baz2() {
+        return *reinterpret_cast<float*>(unspecified + (0xAD0));
+    }
+
+    float& baz3() {
+        return *reinterpret_cast<float*>(unspecified + (0xAD4));
+    }
 };
 
 enum NetMode {

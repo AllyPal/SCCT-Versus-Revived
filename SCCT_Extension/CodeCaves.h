@@ -22,5 +22,6 @@ public:
 	static void Initialize();
 	static bool IsListenServer();
 	static void EnableProcessSecurity();
+	static void OncePerFrame();
 	static LvIn* lvIn;
 };

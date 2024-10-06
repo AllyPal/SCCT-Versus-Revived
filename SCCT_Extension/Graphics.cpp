@@ -729,9 +729,9 @@ float originalSfv = 0.0;
 float originalDfv = 0.0;
 float hSfv = 0.0;
 float hDfv = 0.0;
-void WidescreenViewFix() {
-    if (CodeCaves::lvIn != NULL && CodeCaves::lvIn->lPlC() != NULL && pDevice != NULL) {
-        // Copy/pasted.  TODO: Refactor
+
+void widescreenFovFix() {
+    if (Config::widescreenAspectRatioFix) {
         D3DDISPLAYMODE d3dDisplayMode;
         pDevice->GetDisplayMode(&d3dDisplayMode);
         float defv = CodeCaves::lvIn->lPlC()->Defv();
@@ -770,13 +770,20 @@ void WidescreenViewFix() {
     }
 }
 
-int viewFixEntry = 0x1095E417;
-int viewFix2Entry = 0x1095E43C;
-__declspec(naked) void viewFix() {
+void OnPresented() {
+    if (CodeCaves::lvIn != NULL && CodeCaves::lvIn->lPlC() != NULL && pDevice != NULL) {
+        widescreenFovFix();
+        CodeCaves::OncePerFrame();
+    }
+}
+
+int presentedEntry = 0x1095E417;
+int presented2Entry = 0x1095E43C;
+__declspec(naked) void presented() {
     __asm {
         pushad
     }
-    WidescreenViewFix();
+    OnPresented();
     __asm {
         popad
         add     esp, 0x14
@@ -954,12 +961,12 @@ void Graphics::Initialize()
         MemoryWriter::WriteJump(SetProjection2Entry, SetProjection2);
         MemoryWriter::WriteJump(SetProjection3Entry, SetProjection3);
 
-        MemoryWriter::WriteJump(viewFixEntry, viewFix);
-        MemoryWriter::WriteJump(viewFix2Entry, viewFix);
-
         MemoryWriter::WriteJump(startRenderMenuEntry, startHudMenuRender);
         MemoryWriter::WriteJump(endRenderMenuEntry, endHudMenuRender);
     }
+
+    MemoryWriter::WriteJump(presentedEntry, presented);
+    MemoryWriter::WriteJump(presented2Entry, presented);
 
     //MemoryWriter::WriteJump(D3DPPEntry, D3DPP);
     MemoryWriter::WriteJump(AddEnhancedGuiResolutionsEntry, AddEnhancedGuiResolutions);

@@ -11,6 +11,7 @@
 #include "MemoryWriter.h"
 #include "Input.h"
 #include "GameStructs.h"
+#include "Graphics.h"
 
 LvIn* CodeCaves::lvIn = nullptr;
 int SetLvInEntry = 0x109ADFB3;
@@ -44,15 +45,15 @@ bool IsWindows10OrGreater() {
     if (hMod) {
         RtlGetVersionPtr pRtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
         if (pRtlGetVersion) {
-    OSVERSIONINFOEXW osInfo = { 0 };
-    osInfo.dwOSVersionInfoSize = sizeof(osInfo);
+            OSVERSIONINFOEXW osInfo = { 0 };
+            osInfo.dwOSVersionInfoSize = sizeof(osInfo);
             if (pRtlGetVersion(&osInfo) == 0) {
                 std::cout << "win: " << osInfo.dwMajorVersion << std::endl;
-        return osInfo.dwMajorVersion >= 10;
-    }
+                return osInfo.dwMajorVersion >= 10;
+            }
         }
     }
-    
+
     return false;
 }
 
@@ -70,6 +71,50 @@ void CodeCaves::EnableProcessSecurity()
     if (Config::security_dep && SetProcessDEPPolicy(PROCESS_DEP_ENABLE)) {
         std::cout << "DEP enabled" << std::endl;
     }
+}
+
+bool binocularInitialized = false;
+const long binocularUpdateInterval = 33333333;
+float baz1Initial;
+float baz2Initial;
+float baz3Initial;
+
+
+std::chrono::steady_clock::time_point nextBinocularUpdate;
+void binocularFix() {
+    if (!binocularInitialized) {
+        if (Graphics::lastFrameTime == std::chrono::steady_clock::time_point{}) {
+            // last frame not set yet
+            return;
+        }
+        baz1Initial = CodeCaves::lvIn->lPlC()->baz1();
+        baz2Initial = CodeCaves::lvIn->lPlC()->baz2();
+        baz3Initial = CodeCaves::lvIn->lPlC()->baz3();
+        nextBinocularUpdate = Graphics::lastFrameTime;
+        binocularInitialized = true;
+    }
+    if (nextBinocularUpdate <= Graphics::lastFrameTime) {
+        CodeCaves::lvIn->lPlC()->baz1() = baz1Initial;
+        CodeCaves::lvIn->lPlC()->baz2() = baz2Initial;
+        CodeCaves::lvIn->lPlC()->baz3() = baz3Initial;
+        auto remainder = std::chrono::duration_cast<std::chrono::nanoseconds>(Graphics::lastFrameTime - nextBinocularUpdate).count();
+        nextBinocularUpdate = Graphics::lastFrameTime + std::chrono::nanoseconds(binocularUpdateInterval - remainder);
+
+    }
+    else {
+        CodeCaves::lvIn->lPlC()->baz1() = 0.0f;
+        CodeCaves::lvIn->lPlC()->baz2() = 0.0f;
+        CodeCaves::lvIn->lPlC()->baz3() = 0.0f;
+    }
+}
+
+void forceSensInternal() {
+    CodeCaves::lvIn->lPlC()->Sens() = 4.0f;
+}
+
+void CodeCaves::OncePerFrame() {
+    binocularFix();
+    forceSensInternal();
 }
 
 bool ValidateState(int newState) {
