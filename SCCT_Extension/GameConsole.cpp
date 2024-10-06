@@ -14,6 +14,7 @@
 #include <algorithm>
 #include "GameStructs.h"
 #include "Fonts.h"
+#include "Debug.h"
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
@@ -208,24 +209,26 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
         }
     };
 
-    commandHandlers[L"lod"] = {
-            std::format(L"<number> - higher numbers increase model detail at distance.", Config::lod),
-            [](const std::wstring& arg) {
-            if (!arg.empty()) {
-                auto lod = std::stof(arg);
-#ifndef _DEBUG
-                if (lod < 1.0) {
-                    lod = 1.0;
-                    GameConsole::WriteGameConsole(std::format(L" > minimum setting 1.0 (SCCT Versus Default)", Config::frameRateLimit_hosting));
-                }
-#endif
-                Config::lod = lod;
-                Config::Serialize();
-            }
-            GameConsole::WriteGameConsole(std::format(L" > lod {:.3f}", Config::lod));
-            },
-            std::format(L" lod {:.3f}", Config::lod)
-    };
+//    commandHandlers[L"lod"] = {
+//            std::format(L"<number> - higher numbers increase model detail at distance.", Config::lod),
+//            [](const std::wstring& arg) {
+//            if (!arg.empty()) {
+//                auto lod = std::stof(arg);
+//#ifndef _DEBUG
+//                if (lod < 1.0) {
+//                    lod = 1.0;
+//                    GameConsole::WriteGameConsole(std::format(L" > minimum setting 1.0 (SCCT Versus Default)", Config::frameRateLimit_hosting));
+//                }
+//#endif
+//                Config::lod = lod;
+//                Config::Serialize();
+//            }
+//            GameConsole::WriteGameConsole(std::format(L" > lod {:.3f}", Config::lod));
+//            },
+//            std::format(L" lod {:.3f}", Config::lod)
+//    };
+
+    Debug::CommandHandlers(&commandHandlers);
 
     return commandHandlers;
 }
