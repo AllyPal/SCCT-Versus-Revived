@@ -7,6 +7,7 @@
 #ifndef PCH_H
 #define PCH_H
 constexpr auto NOP = 0x90;
+constexpr auto consoleKeyBind = 0x29;
 constexpr int frameRateLimit_hosting_min = 30;
 constexpr int frameRateLimit_hosting_max = 165;
 constexpr int frameRateLimit_client_min = 30;

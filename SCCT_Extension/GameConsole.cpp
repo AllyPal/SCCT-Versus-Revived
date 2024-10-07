@@ -22,11 +22,11 @@ void PrintConsoleHelp();
 void PrintConsoleValues();
 
 int getGraveAccentKeyCode() {
-    UINT backtickscanCode = 0x29;
     HKL layout = GetKeyboardLayout(0);
-    UINT vKey = MapVirtualKeyEx(backtickscanCode, MAPVK_VSC_TO_VK, layout);
+    UINT vKey = MapVirtualKeyEx(consoleKeyBind, MAPVK_VSC_TO_VK, layout);
     return vKey & 0xFF;
 }
+
 static Console* console;
 
 void OnConsoleCreated() {
@@ -165,10 +165,10 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
 #ifndef _DEBUG
             if (frameLimit < frameRateLimit_hosting_min) {
                 frameLimit = frameRateLimit_hosting_min;
-                GameConsole::WriteGameConsole(std::format(L" > minimum setting is 30 FPS", Config::frameRateLimit_hosting));
+                GameConsole::WriteGameConsole(std::format(L" > minimum setting is "+ frameRateLimit_hosting_min +" FPS", Config::frameRateLimit_hosting));
             } else if (frameLimit > frameRateLimit_hosting_max) {
                 frameLimit = frameRateLimit_hosting_max;
-                GameConsole::WriteGameConsole(std::format(L" > maximum setting is currently 90 FPS whilst hosting.", Config::frameRateLimit_hosting));
+                GameConsole::WriteGameConsole(std::format(L" > maximum setting is currently " + frameRateLimit_hosting_max + " FPS whilst hosting.", Config::frameRateLimit_hosting));
             }
 #endif
             Config::frameRateLimit_hosting = frameLimit;

@@ -121,3 +121,36 @@ struct FragGrenade {
         return *reinterpret_cast<uint32_t*>(unspecified + (0x2F0));
     }
 };
+
+struct CompCol;
+struct NoGuiComponent {
+    std::byte unspecified[0x1000];
+
+    uint32_t& flags() {
+        return *reinterpret_cast<uint32_t*>(unspecified + (0x5C));
+    }
+
+    CompCol* Components() {
+        return *reinterpret_cast<CompCol**>(unspecified + (0x190));
+    }
+};
+
+struct CompCol {
+    std::byte unspecified[0x1000];
+
+    NoGuiComponent* GetControl(size_t index) {
+        return *reinterpret_cast<NoGuiComponent**>(unspecified + (index - 1) * 4);
+    }
+};
+
+struct GUIPageWaitLaunch {
+    std::byte unspecified[0x1000];
+
+    wchar_t* Title() {
+        return *reinterpret_cast<wchar_t**>(unspecified + (0x280));
+    }
+
+    CompCol* Components() {
+        return *reinterpret_cast<CompCol**>(unspecified + (0x190));
+    }
+};

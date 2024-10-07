@@ -54,7 +54,7 @@ void Config::Initialize(std::wstring& configFilePath) {
     security_acg = false;
     security_dep = true;
     disableStickyCamContextMenu = true;
-    lod = 3.0;
+    lod = 10.0;
 
     std::ifstream configFile(configFilePathRef);
 

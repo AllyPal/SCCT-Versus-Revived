@@ -108,6 +108,30 @@ void binocularFix() {
     }
 }
 
+void onPageLoad(GUIPageWaitLaunch* page)
+{
+    static GUIPageWaitLaunch* lastPage;
+    if (page != lastPage && page->Title() != nullptr && wcscmp(page->Title(), L"Game Options") == 0) {
+        page->Components()->GetControl(3)->Components()->GetControl(2)->flags() &= ~8;
+    }
+    lastPage = page;
+}
+
+int GuiPageWaitLoadEntry = 0x10C02C58;
+__declspec(naked) void GuiPageWaitLoad() {
+    static GUIPageWaitLaunch* page;
+    __asm {
+        pushad
+        mov [page], ecx
+    }
+    onPageLoad(page);
+    static int Return = 0x10A5A4C0;
+    __asm {
+        popad
+        jmp dword ptr[Return]
+    }
+}
+
 void forceSensInternal() {
     CodeCaves::lvIn->lPlC()->Sens() = 4.0f;
 }
@@ -381,14 +405,20 @@ static void InitLabelOverrides() {
     overrideMap[{L"MainPage_Live.Caption", L"Menu_Multi"}] = L" ";
     overrideMap[{L"MainPage_LAN.Caption", L"Menu_Multi"}] = L"Play Multiplayer";
 
-    //overrideMap[{L"TitlePage", L"Lobby_Create"}] = L"Versus Reloaded Lobby";
-    //overrideMap[{L"LabelCaption", L"No_Opti_Match_Found"}] = L"A new version of SCCT Redux is available||Upgrade to the latest version to see games again||Type 'upgrade' in console to open the download page";
-    //overrideMap[{L"TitrePage.Caption", L"LAN_Seek_Games_List"}] = L"";
-    //overrideMap[{L"TitlePage", L"LAN_Seek_Games_List"}] = L"";
+    HKL layout = GetKeyboardLayout(0);
+    UINT virtualKey = MapVirtualKeyEx(consoleKeyBind, MAPVK_VSC_TO_VK, layout);
 
-    //edi:sResolution ebp:Video_Settings result: ("640 x 480","800 x 600","1024 x 768","1280 x 1024","Native Resolution","1440 x 1080","1920 x 1080","1920 x 1440","2560 x 1440","2880 x 2160","3840 x 2160")
+    BYTE keyboardState[256] = { 0 };
+    WCHAR buffer[3] = { 0 };
+    int chars = ToUnicodeEx(virtualKey, consoleKeyBind, keyboardState, buffer, 2, 0, layout);
 
-    overrideMap[{L"MouseSensitive.Caption", L"Controller_Settings"}] = L"Type sens in console for mouse sensitivity. Keep this at 40";
+    if (chars > 0) {
+        std::wstring message = L"Mouse Sensitivity - set with sens <value> in console (bind " + std::wstring(1, buffer[0]) + L")";
+        overrideMap[{L"MouseSensitive.Caption", L"Controller_Settings"}] = message;
+    }
+    else {
+        overrideMap[{L"MouseSensitive.Caption", L"Controller_Settings"}] = L"Mouse Sensitivity - set with sens <value> in console";
+    }
 }
 
 void PrintTextEntry(wchar_t* _eax, wchar_t* _edi, wchar_t* _ebp, wchar_t* result) {
@@ -491,6 +521,8 @@ void CodeCaves::Initialize()
     MemoryWriter::WriteJump(SetLvInEntry, SetLvIn);
     MemoryWriter::WriteJump(OnStateChangeEntry, OnStateChange);
     MemoryWriter::WriteJump(LoadTextEntry, LoadText);
+
+    MemoryWriter::WriteFunctionPtr(GuiPageWaitLoadEntry, GuiPageWaitLoad);
 
     if (Config::disableStickyCamContextMenu) {
         MemoryWriter::WriteJump(StickyCamContextMenuBlockEntry, StickyCamContextMenuBlock);
