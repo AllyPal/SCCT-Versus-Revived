@@ -142,11 +142,11 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
 #ifndef _DEBUG
             if (frameLimit < frameRateLimit_client_min) {
                 frameLimit = frameRateLimit_client_min;
-                GameConsole::WriteGameConsole(std::format(L" > minimum setting is 30 FPS", Config::frameRateLimit_hosting));
+                GameConsole::WriteGameConsole(std::format(L" > minimum setting is {} FPS", frameRateLimit_client_min));
             }
             else if (frameLimit > frameRateLimit_client_max) {
                 frameLimit = frameRateLimit_client_max;
-                GameConsole::WriteGameConsole(std::format(L" > maximum setting is 1000 FPS.", Config::frameRateLimit_hosting));
+                GameConsole::WriteGameConsole(std::format(L" > maximum setting is {} FPS.", frameRateLimit_client_max));
             }
 #endif
             Config::frameRateLimit_client = frameLimit;
@@ -165,10 +165,10 @@ std::map<std::wstring, CommandHandler> getCommandHandlers() {
 #ifndef _DEBUG
             if (frameLimit < frameRateLimit_hosting_min) {
                 frameLimit = frameRateLimit_hosting_min;
-                GameConsole::WriteGameConsole(std::format(L" > minimum setting is "+ frameRateLimit_hosting_min +" FPS", Config::frameRateLimit_hosting));
+                GameConsole::WriteGameConsole(std::format(L" > minimum setting is {} FPS", frameRateLimit_hosting_min));
             } else if (frameLimit > frameRateLimit_hosting_max) {
                 frameLimit = frameRateLimit_hosting_max;
-                GameConsole::WriteGameConsole(std::format(L" > maximum setting is currently " + frameRateLimit_hosting_max + " FPS whilst hosting.", Config::frameRateLimit_hosting));
+                GameConsole::WriteGameConsole(std::format(L" > maximum setting is currently {} FPS whilst hosting.", frameRateLimit_hosting_max));
             }
 #endif
             Config::frameRateLimit_hosting = frameLimit;
