@@ -15,84 +15,84 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SCCT_Extension\framework.h">
+    <ClInclude Include="Reloaded.Core\framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\pch.h">
+    <ClInclude Include="Reloaded.Core\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\logger.h">
+    <ClInclude Include="Reloaded.Core\logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\dllmain.h">
+    <ClInclude Include="Reloaded.Core\dllmain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\CodeCaves.h">
+    <ClInclude Include="Reloaded.Core\CodeCaves.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\Config.h">
+    <ClInclude Include="Reloaded.Core\Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\MemoryWriter.h">
+    <ClInclude Include="Reloaded.Core\MemoryWriter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\StringOperations.h">
+    <ClInclude Include="Reloaded.Core\StringOperations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\GameConsole.h">
+    <ClInclude Include="Reloaded.Core\GameConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\Input.h">
+    <ClInclude Include="Reloaded.Core\Input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\GameStructs.h">
+    <ClInclude Include="Reloaded.Core\GameStructs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\Graphics.h">
+    <ClInclude Include="Reloaded.Core\Graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\Networking.h">
+    <ClInclude Include="Reloaded.Core\Networking.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\Debug.h">
+    <ClInclude Include="Reloaded.Core\Debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Extension\Fonts.h">
+    <ClInclude Include="Reloaded.Core\Fonts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SCCT_Extension\dllmain.cpp">
+    <ClCompile Include="Reloaded.Core\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\pch.cpp">
+    <ClCompile Include="Reloaded.Core\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\logger.cpp">
+    <ClCompile Include="Reloaded.Core\logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\CodeCaves.cpp">
+    <ClCompile Include="Reloaded.Core\CodeCaves.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\Config.cpp">
+    <ClCompile Include="Reloaded.Core\Config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\GameConsole.cpp">
+    <ClCompile Include="Reloaded.Core\GameConsole.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\Input.cpp">
+    <ClCompile Include="Reloaded.Core\Input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\Graphics.cpp">
+    <ClCompile Include="Reloaded.Core\Graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\Networking.cpp">
+    <ClCompile Include="Reloaded.Core\Networking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\Debug.cpp">
+    <ClCompile Include="Reloaded.Core\Debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Extension\Fonts.cpp">
+    <ClCompile Include="Reloaded.Core\Fonts.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -16,6 +16,7 @@
     <ProjectGuid>{b513433d-f0df-4304-92a8-536fbc224c8e}</ProjectGuid>
     <RootNamespace>SCCTExtension</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Reloaded.Core</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -86,34 +87,34 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="SCCT_Extension\CodeCaves.h" />
-    <ClInclude Include="SCCT_Extension\Config.h" />
-    <ClInclude Include="SCCT_Extension\Debug.h" />
-    <ClInclude Include="SCCT_Extension\dllmain.h" />
-    <ClInclude Include="SCCT_Extension\Fonts.h" />
-    <ClInclude Include="SCCT_Extension\framework.h" />
-    <ClInclude Include="SCCT_Extension\GameConsole.h" />
-    <ClInclude Include="SCCT_Extension\GameStructs.h" />
-    <ClInclude Include="SCCT_Extension\Graphics.h" />
-    <ClInclude Include="SCCT_Extension\Input.h" />
-    <ClInclude Include="SCCT_Extension\logger.h" />
-    <ClInclude Include="SCCT_Extension\MemoryWriter.h" />
-    <ClInclude Include="SCCT_Extension\Networking.h" />
-    <ClInclude Include="SCCT_Extension\pch.h" />
-    <ClInclude Include="SCCT_Extension\StringOperations.h" />
+    <ClInclude Include="Reloaded.Core\CodeCaves.h" />
+    <ClInclude Include="Reloaded.Core\Config.h" />
+    <ClInclude Include="Reloaded.Core\Debug.h" />
+    <ClInclude Include="Reloaded.Core\dllmain.h" />
+    <ClInclude Include="Reloaded.Core\Fonts.h" />
+    <ClInclude Include="Reloaded.Core\framework.h" />
+    <ClInclude Include="Reloaded.Core\GameConsole.h" />
+    <ClInclude Include="Reloaded.Core\GameStructs.h" />
+    <ClInclude Include="Reloaded.Core\Graphics.h" />
+    <ClInclude Include="Reloaded.Core\Input.h" />
+    <ClInclude Include="Reloaded.Core\logger.h" />
+    <ClInclude Include="Reloaded.Core\MemoryWriter.h" />
+    <ClInclude Include="Reloaded.Core\Networking.h" />
+    <ClInclude Include="Reloaded.Core\pch.h" />
+    <ClInclude Include="Reloaded.Core\StringOperations.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SCCT_Extension\CodeCaves.cpp" />
-    <ClCompile Include="SCCT_Extension\Config.cpp" />
-    <ClCompile Include="SCCT_Extension\Debug.cpp" />
-    <ClCompile Include="SCCT_Extension\dllmain.cpp" />
-    <ClCompile Include="SCCT_Extension\Fonts.cpp" />
-    <ClCompile Include="SCCT_Extension\GameConsole.cpp" />
-    <ClCompile Include="SCCT_Extension\Graphics.cpp" />
-    <ClCompile Include="SCCT_Extension\Input.cpp" />
-    <ClCompile Include="SCCT_Extension\logger.cpp" />
-    <ClCompile Include="SCCT_Extension\Networking.cpp" />
-    <ClCompile Include="SCCT_Extension\pch.cpp">
+    <ClCompile Include="Reloaded.Core\CodeCaves.cpp" />
+    <ClCompile Include="Reloaded.Core\Config.cpp" />
+    <ClCompile Include="Reloaded.Core\Debug.cpp" />
+    <ClCompile Include="Reloaded.Core\dllmain.cpp" />
+    <ClCompile Include="Reloaded.Core\Fonts.cpp" />
+    <ClCompile Include="Reloaded.Core\GameConsole.cpp" />
+    <ClCompile Include="Reloaded.Core\Graphics.cpp" />
+    <ClCompile Include="Reloaded.Core\Input.cpp" />
+    <ClCompile Include="Reloaded.Core\logger.cpp" />
+    <ClCompile Include="Reloaded.Core\Networking.cpp" />
+    <ClCompile Include="Reloaded.Core\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>

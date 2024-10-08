@@ -16,7 +16,7 @@
     <ProjectGuid>{31e48fef-9d8d-40cc-bb2d-b05a81dd5004}</ProjectGuid>
     <RootNamespace>SCCTLauncher</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>SCCT_Launcher</ProjectName>
+    <ProjectName>SCCT.Reloaded</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -80,18 +80,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="SCCT_Launcher\Inject.cpp" />
-    <ClCompile Include="SCCT_Launcher\Main.cpp" />
+    <ClCompile Include="Reloaded.Launcher\Inject.cpp" />
+    <ClCompile Include="Reloaded.Launcher\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SCCT_Launcher\Inject.h" />
-    <ClInclude Include="SCCT_Launcher\resource.h" />
+    <ClInclude Include="Reloaded.Launcher\Inject.h" />
+    <ClInclude Include="Reloaded.Launcher\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="SCCT_Launcher\SCCT Launcher.rc" />
+    <ResourceCompile Include="Reloaded.Launcher\SCCT Launcher.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="SCCT_Launcher\Icon.ico" />
+    <Image Include="Reloaded.Launcher\Icon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

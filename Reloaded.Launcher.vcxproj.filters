@@ -15,28 +15,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SCCT_Launcher\Main.cpp">
+    <ClCompile Include="Reloaded.Launcher\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SCCT_Launcher\Inject.cpp">
+    <ClCompile Include="Reloaded.Launcher\Inject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SCCT_Launcher\Inject.h">
+    <ClInclude Include="Reloaded.Launcher\Inject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SCCT_Launcher\resource.h">
+    <ClInclude Include="Reloaded.Launcher\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="SCCT_Launcher\SCCT Launcher.rc">
+    <ResourceCompile Include="Reloaded.Launcher\SCCT Launcher.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="SCCT_Launcher\Icon.ico">
+    <Image Include="Reloaded.Launcher\Icon.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
