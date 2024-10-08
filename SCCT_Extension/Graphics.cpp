@@ -287,8 +287,10 @@ __declspec(naked) void D3D8Caps() {
 }
 
 bool ResolutionChangeAllowed(int height, int width) {
-    auto result = (width != RenderWidth || height != RenderHeight) && height != 0 && width != 0;
-    return result;
+    return true;
+    // should no longer be needed now we're not throwing away the device constantly
+    //auto result = (width != RenderWidth || height != RenderHeight) && height != 0 && width != 0;
+    //return result;
 }
 
 int CanChangeResolutionEntry = 0x10B0F9A1;
