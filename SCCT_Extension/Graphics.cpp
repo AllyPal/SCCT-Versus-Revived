@@ -541,7 +541,7 @@ int startRenderMenuEntry = 0x10A0FDC0;
 __declspec(naked) void startHudMenuRender() {
     static int Return = 0x10A0FDC6;
     __asm {
-        mov dword ptr[renderingHudMenu], 1
+        mov byte ptr[renderingHudMenu], 1
         mov     eax, [esi + 0x28]
         mov     ecx, [eax + 0x30]
         jmp     dword ptr[Return]
@@ -550,7 +550,7 @@ __declspec(naked) void startHudMenuRender() {
 int endRenderMenuEntry = 0x10A0FE4B;
 __declspec(naked) void endHudMenuRender() {
     __asm {
-        mov dword ptr[renderingHudMenu], 0
+        mov byte ptr[renderingHudMenu], 0
         retn    4
     }
 }
