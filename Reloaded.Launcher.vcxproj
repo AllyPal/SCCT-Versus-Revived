@@ -16,7 +16,7 @@
     <ProjectGuid>{31e48fef-9d8d-40cc-bb2d-b05a81dd5004}</ProjectGuid>
     <RootNamespace>SCCTLauncher</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>SCCT.Reloaded</ProjectName>
+    <ProjectName>Reloaded.Launcher</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
