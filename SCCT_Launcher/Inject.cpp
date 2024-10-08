@@ -1,17 +1,17 @@
 #include <iostream>
 #include <windows.h>
-#include <stdio.h>
+#include <cstdio>
 #include "Inject.h"
 
 BOOL Inject::InjectDLL(HANDLE hProcess, const std::wstring& dllPath) {
     SIZE_T pathSize = (dllPath.size() + 1) * sizeof(wchar_t);
 
-    LPVOID allocMem = VirtualAllocEx(hProcess, NULL, pathSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (allocMem == NULL) {
+    LPVOID allocMem = VirtualAllocEx(hProcess, nullptr, pathSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (allocMem == nullptr) {
         return FALSE;
     }
 
-    if (!WriteProcessMemory(hProcess, allocMem, dllPath.c_str(), pathSize, NULL)) {
+    if (!WriteProcessMemory(hProcess, allocMem, dllPath.c_str(), pathSize, nullptr)) {
         VirtualFreeEx(hProcess, allocMem, 0, MEM_RELEASE);
         return FALSE;
     }
@@ -21,9 +21,9 @@ BOOL Inject::InjectDLL(HANDLE hProcess, const std::wstring& dllPath) {
         VirtualFreeEx(hProcess, allocMem, 0, MEM_RELEASE);
         return FALSE;
     }
-    LPVOID loadLibAddr = (LPVOID)GetProcAddress(hKernel32, "LoadLibraryW");
+    auto loadLibAddr = LPVOID(GetProcAddress(hKernel32, "LoadLibraryW"));
 
-    HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)loadLibAddr, allocMem, 0, NULL);
+    HANDLE hThread = CreateRemoteThread(hProcess, nullptr, 0, (LPTHREAD_START_ROUTINE)loadLibAddr, allocMem, 0, nullptr);
     if (hThread == NULL) {
         VirtualFreeEx(hProcess, allocMem, 0, MEM_RELEASE);
         return FALSE;

@@ -15,84 +15,84 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
+    <ClInclude Include="SCCT_Extension\framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
+    <ClInclude Include="SCCT_Extension\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="logger.h">
+    <ClInclude Include="SCCT_Extension\logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dllmain.h">
+    <ClInclude Include="SCCT_Extension\dllmain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CodeCaves.h">
+    <ClInclude Include="SCCT_Extension\CodeCaves.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Config.h">
+    <ClInclude Include="SCCT_Extension\Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryWriter.h">
+    <ClInclude Include="SCCT_Extension\MemoryWriter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="StringOperations.h">
+    <ClInclude Include="SCCT_Extension\StringOperations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GameConsole.h">
+    <ClInclude Include="SCCT_Extension\GameConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Input.h">
+    <ClInclude Include="SCCT_Extension\Input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GameStructs.h">
+    <ClInclude Include="SCCT_Extension\GameStructs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics.h">
+    <ClInclude Include="SCCT_Extension\Graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Networking.h">
+    <ClInclude Include="SCCT_Extension\Networking.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Debug.h">
+    <ClInclude Include="SCCT_Extension\Debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Fonts.h">
+    <ClInclude Include="SCCT_Extension\Fonts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="SCCT_Extension\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="SCCT_Extension\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="logger.cpp">
+    <ClCompile Include="SCCT_Extension\logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CodeCaves.cpp">
+    <ClCompile Include="SCCT_Extension\CodeCaves.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Config.cpp">
+    <ClCompile Include="SCCT_Extension\Config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GameConsole.cpp">
+    <ClCompile Include="SCCT_Extension\GameConsole.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Input.cpp">
+    <ClCompile Include="SCCT_Extension\Input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics.cpp">
+    <ClCompile Include="SCCT_Extension\Graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Networking.cpp">
+    <ClCompile Include="SCCT_Extension\Networking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Debug.cpp">
+    <ClCompile Include="SCCT_Extension\Debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fonts.cpp">
+    <ClCompile Include="SCCT_Extension\Fonts.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

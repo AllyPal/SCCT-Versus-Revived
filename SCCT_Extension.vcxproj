@@ -46,6 +46,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>C:\Users\Jon\Downloads\Enhanced SCCT Versus 3.4 Latest\Enhanced SCCT Versus 3.4\</OutDir>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>false</VcpkgEnableManifest>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -83,34 +86,34 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CodeCaves.h" />
-    <ClInclude Include="Config.h" />
-    <ClInclude Include="Debug.h" />
-    <ClInclude Include="dllmain.h" />
-    <ClInclude Include="Fonts.h" />
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="GameConsole.h" />
-    <ClInclude Include="GameStructs.h" />
-    <ClInclude Include="Graphics.h" />
-    <ClInclude Include="Input.h" />
-    <ClInclude Include="logger.h" />
-    <ClInclude Include="MemoryWriter.h" />
-    <ClInclude Include="Networking.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="StringOperations.h" />
+    <ClInclude Include="SCCT_Extension\CodeCaves.h" />
+    <ClInclude Include="SCCT_Extension\Config.h" />
+    <ClInclude Include="SCCT_Extension\Debug.h" />
+    <ClInclude Include="SCCT_Extension\dllmain.h" />
+    <ClInclude Include="SCCT_Extension\Fonts.h" />
+    <ClInclude Include="SCCT_Extension\framework.h" />
+    <ClInclude Include="SCCT_Extension\GameConsole.h" />
+    <ClInclude Include="SCCT_Extension\GameStructs.h" />
+    <ClInclude Include="SCCT_Extension\Graphics.h" />
+    <ClInclude Include="SCCT_Extension\Input.h" />
+    <ClInclude Include="SCCT_Extension\logger.h" />
+    <ClInclude Include="SCCT_Extension\MemoryWriter.h" />
+    <ClInclude Include="SCCT_Extension\Networking.h" />
+    <ClInclude Include="SCCT_Extension\pch.h" />
+    <ClInclude Include="SCCT_Extension\StringOperations.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CodeCaves.cpp" />
-    <ClCompile Include="Config.cpp" />
-    <ClCompile Include="Debug.cpp" />
-    <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Fonts.cpp" />
-    <ClCompile Include="GameConsole.cpp" />
-    <ClCompile Include="Graphics.cpp" />
-    <ClCompile Include="Input.cpp" />
-    <ClCompile Include="logger.cpp" />
-    <ClCompile Include="Networking.cpp" />
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="SCCT_Extension\CodeCaves.cpp" />
+    <ClCompile Include="SCCT_Extension\Config.cpp" />
+    <ClCompile Include="SCCT_Extension\Debug.cpp" />
+    <ClCompile Include="SCCT_Extension\dllmain.cpp" />
+    <ClCompile Include="SCCT_Extension\Fonts.cpp" />
+    <ClCompile Include="SCCT_Extension\GameConsole.cpp" />
+    <ClCompile Include="SCCT_Extension\Graphics.cpp" />
+    <ClCompile Include="SCCT_Extension\Input.cpp" />
+    <ClCompile Include="SCCT_Extension\logger.cpp" />
+    <ClCompile Include="SCCT_Extension\Networking.cpp" />
+    <ClCompile Include="SCCT_Extension\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>

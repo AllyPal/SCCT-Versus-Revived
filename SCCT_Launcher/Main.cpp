@@ -1,6 +1,6 @@
 #include <iostream>
 #include <windows.h>
-#include <stdio.h>
+#include <cstdio>
 #include <fstream>
 #include <ctime>
 #include <iomanip>
@@ -13,7 +13,7 @@
 
 static std::wstring GetExecutablePath() {
     wchar_t buffer[MAX_PATH];
-    GetModuleFileName(NULL, buffer, MAX_PATH);
+    GetModuleFileName(nullptr, buffer, MAX_PATH);
     return std::wstring(buffer);
 }
 
@@ -122,7 +122,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         std::cin.get();
         return 1;
     }
-
     std::wcout << L"Code injected successfully." << std::endl;
     ResumeThread(pi.hThread);
     std::wcout << L"Process resumed." << std::endl;

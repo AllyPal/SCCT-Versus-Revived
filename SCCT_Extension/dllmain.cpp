@@ -15,7 +15,7 @@ INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
 
 std::wstring GetDllPath(HINSTANCE hModule) {
     std::vector<wchar_t> pathBuffer(MAX_PATH);
-    DWORD result = GetModuleFileName(hModule, pathBuffer.data(), static_cast<DWORD>(pathBuffer.size()));
+    const DWORD result = GetModuleFileName(hModule, pathBuffer.data(), pathBuffer.size());
     if (result == 0) {
         return L"";
     }
