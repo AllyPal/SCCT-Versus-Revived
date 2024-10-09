@@ -97,7 +97,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     auto exePath = FindScctVersusExecutable();
     if (exePath.empty()) {
         // TODO: Check where it goes for full copies of the game
-        std::wcerr << L"SCCT_Versus.exe not found. Make sure the application is placed in the root or /System folder of your game" << std::endl;
+        std::wcerr << L"SCCT_Versus.ex not found. Make sure the application is placed in the root or /System folder of your game" << std::endl;
         std::cin.get();
         return 1;
     }
@@ -115,7 +115,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     std::wcout << L"Suspended process created successfully." << std::endl;
 
-    std::wstring dllPath = GetExecutableDirectory() + L"\\SCCT_Extension.dll";
+    std::wstring dllPath = GetExecutableDirectory() + L"\\Reloaded.Core.dll";
     if (!Inject::InjectDLL(pi.hProcess, dllPath)) {
         std::wcerr << L"Failed to inject DLL. Terminating SCCT_Versus.exe" << std::endl;
         TerminateProcess(pi.hProcess, 1);
