@@ -45,9 +45,8 @@ BOOL CALLBACK InitFunction(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
     HMODULE hModule = static_cast<HMODULE>(Parameter);
     auto dllPath = GetDllPath(hModule);
     auto directoryPath = GetExecutableDirectory(dllPath);
-#ifdef _DEBUG
+
     RedirectToConsole();
-#endif
 
     Logger::Initialize(dllPath);
     auto configPath = directoryPath + L"\\SCCT_config.json";
