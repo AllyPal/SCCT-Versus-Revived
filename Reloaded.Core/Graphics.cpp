@@ -23,6 +23,9 @@ static int BackBufferHeight = 0;
 static int RenderWidth = 0;
 static int RenderHeight = 0;
 
+std::vector<DisplayModePair> displayModePairs;
+DisplayModeOverride* Graphics::videoSettingsDisplayModes;
+
 int D3DCreateResultEntry = 0x1095B986;
 __declspec(naked) void D3DCreateResult() {
     static int Return = 0x1095B98C;
@@ -67,6 +70,110 @@ void PrintParams(D3DPRESENT_PARAMETERS* d3dpp) {
     std::cout << "FullScreen_PresentationInterval: " << d3dpp->FullScreen_PresentationInterval << std::endl;
 }
 
+std::string GetClosestAspectRatio(UINT width, UINT height) {
+    const KnownAspectRatio aspectRatios[] = {
+        {16.0, 9.0, "(16:9)"},
+        {4.0, 3.0, "(4:3)"},
+        {21.0, 9.0, "(21:9 stretched)"},
+        {16.0, 10.0, "(16:10)"},
+        {3.0, 2.0, "(3:2)"},
+    };
+
+    double actualRatio = static_cast<double>(width) / height;
+
+    const KnownAspectRatio* closest = &aspectRatios[0];
+    double minDifference = fabs(actualRatio - (closest->width / closest->height));
+
+    for (const auto& ratio : aspectRatios) {
+        double difference = fabs(actualRatio - (ratio.width / ratio.height));
+        if (difference < minDifference) {
+            minDifference = difference;
+            closest = &ratio;
+        }
+    }
+
+    return closest->name;
+}
+
+std::vector<DisplayModePair> SortDisplayModes(std::vector<DisplayModePair>& modes) {
+    auto sortByHeightThenWidth = [](const DisplayModePair& a, const DisplayModePair& b) {
+        if (a.height == b.height) {
+            return a.width > b.width;
+        }
+        return a.height > b.height;
+        };
+
+    std::sort(modes.begin(), modes.end(), sortByHeightThenWidth);
+
+    return modes;
+}
+
+std::vector<DisplayModePair> GetDisplayModesWithHighestRefreshRate() {
+    std::vector<DisplayModePair> displayModes;
+    std::map<std::string, ResolutionInfo> bestModes;
+
+    UINT modeCount = d3d->GetAdapterModeCount(D3DADAPTER_DEFAULT);
+
+    D3DDISPLAYMODE displayMode;
+    for (UINT i = 0; i < modeCount; i++) {
+        if (SUCCEEDED(d3d->EnumAdapterModes(D3DADAPTER_DEFAULT, i, &displayMode))) {
+            std::string key = std::to_string(displayMode.Width) + "x" +
+                std::to_string(displayMode.Height) + "x" +
+                std::to_string(displayMode.Format);
+
+            if (bestModes.find(key) == bestModes.end() || displayMode.RefreshRate > bestModes[key].refreshRate) {
+                bestModes[key] = { displayMode.Width, displayMode.Height, displayMode.RefreshRate };
+            }
+        }
+    }
+
+    for (const auto& entry : bestModes) {
+        const ResolutionInfo& info = entry.second;
+
+        std::string modeWithFormat = std::to_string(info.width) + "x" +
+            std::to_string(info.height) + "x32 F";
+
+        auto aspectRatio = GetClosestAspectRatio(info.width, info.height);
+        std::string modeWithAsterisk = std::to_string(info.width) + " * " +
+            std::to_string(info.height) + " " + aspectRatio;
+
+        displayModes.push_back({ modeWithFormat, modeWithAsterisk, info.width, info.height, aspectRatio });
+    }
+    
+    return SortDisplayModes(displayModes);
+}
+
+DisplayModeOverride* FormatDisplayModesForOutput() {
+    std::vector<DisplayModeOverride> vector;
+
+    for (const auto& mode : displayModePairs) {
+        std::wstring displayText = std::to_wstring(mode.width) + L" x " +
+            std::to_wstring(mode.height) + L" " +
+            StringOperations::stringToWString(mode.aspectRatio);
+
+        DisplayModeOverride overrideEntry;
+
+        overrideEntry.displayText = new wchar_t[displayText.size() + 1];
+
+        std::copy(displayText.begin(), displayText.end(), overrideEntry.displayText);
+        overrideEntry.displayText[displayText.size()] = L'\0';
+
+        overrideEntry.length = static_cast<int>(displayText.size()+1);
+        overrideEntry.alsoLength = static_cast<int>(displayText.size()+1);
+
+        vector.push_back(overrideEntry);
+    }
+
+    auto outSize = vector.size();
+    DisplayModeOverride* rawArray = new DisplayModeOverride[outSize];
+
+    for (size_t i = 0; i < outSize; ++i) {
+        rawArray[i] = vector[i];
+    }
+
+    return rawArray;
+}
+
 static D3DPRESENT_PARAMETERS d3dppReplacement;
 static D3DPRESENT_PARAMETERS* overriddenD3dpp;
 void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
@@ -91,24 +198,24 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
 
         SetWindowPos(hWnd, HWND_TOP, 0, 0, d3dppReplacement.BackBufferWidth,
             d3dppReplacement.BackBufferHeight, SWP_NOZORDER | SWP_NOACTIVATE);
-        }
-
-    if (Config::forceMaxRefreshRate && !Config::labs_borderlessFullscreen) {
-        auto refreshRate = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
-        if (refreshRate != 0) {
-            d3dppReplacement.FullScreen_RefreshRateInHz = refreshRate;
-        }
     }
 
+    if (Config::forceMaxRefreshRate && !Config::labs_borderlessFullscreen) {
+        d3dppReplacement.FullScreen_RefreshRateInHz = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
+    }
+
+    displayModePairs = GetDisplayModesWithHighestRefreshRate();
+    Graphics::videoSettingsDisplayModes = FormatDisplayModesForOutput();
+    //CodeCaves::SetLabelOverride(L"sRes", L"Video_Settings", output);
     //if (caps->MaxAnisotropy != 0) {
     //    UINT qualityLevels;
 
-    //    auto result = d3d->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT,
+    //    auto vector = d3d->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT,
     //        D3DDEVTYPE_HAL,
     //        d3dppReplacement.BackBufferFormat, // Example format
     //        d3dppReplacement.Windowed,           // Windowed mode
     //        D3DMULTISAMPLE_16_SAMPLES);
-    //    if (SUCCEEDED(result)) {
+    //    if (SUCCEEDED(vector)) {
     //        d3dppReplacement.MultiSampleType = D3DMULTISAMPLE_16_SAMPLES;
     //        
     //    }
@@ -910,23 +1017,28 @@ __declspec(naked) void animatedTextureFix() {
     }
 }
 
-static int ScctEnhancedIdentifier = 0x10C42DA4;
+int Graphics::GetResolutionCount() {
+    return displayModePairs.size();
+}
+
+//static int ScctEnhancedIdentifier = 0x10C42DA4;
 static int AddEnhancedGuiResolutionsEntry = 0x10B0FC5E;
 __declspec(naked) void AddEnhancedGuiResolutions() {
+    static int MaxResolutionIndex;
     static int Return = 0x10B0FC64;
     __asm {
-        push eax
-        mov eax, dword ptr[ScctEnhancedIdentifier]
-        mov al, byte ptr[eax]
-        cmp al, '3'
-        jne notEnhanced
-
-        pop eax
-        push 13 // resolution count
-
-        notEnhanced:
+        pushad
+    }
+    MaxResolutionIndex = Graphics::GetResolutionCount() - 1;
+    __asm{
+        popad
+        push dword ptr[MaxResolutionIndex]
+        //mov eax, dword ptr[ScctEnhancedIdentifier]
+        //mov al, byte ptr[eax]
+        //cmp al, '3'
+        //jne notEnhanced
         push 0x10C42C74
-            jmp dword ptr[Return]
+        jmp dword ptr[Return]
     }
 }
 

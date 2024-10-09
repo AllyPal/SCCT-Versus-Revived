@@ -108,7 +108,7 @@ void binocularFix() {
     }
 }
 
-void onPageLoad(GUIPageWaitLaunch* page)
+void onPageUpdate(GUIPageWaitLaunch* page)
 {
     static GUIPageWaitLaunch* lastPage;
     if (page != lastPage && page->Title() != nullptr && wcscmp(page->Title(), L"Game Options") == 0) {
@@ -117,18 +117,46 @@ void onPageLoad(GUIPageWaitLaunch* page)
     lastPage = page;
 }
 
-int GuiPageWaitLoadEntry = 0x10C02C58;
-__declspec(naked) void GuiPageWaitLoad() {
+int GuiPageWaitUpdateEntry = 0x10C02C58;
+__declspec(naked) void GuiPageWaitUpdate() {
     static GUIPageWaitLaunch* page;
     __asm {
         pushad
         mov [page], ecx
     }
-    onPageLoad(page);
+    onPageUpdate(page);
     static int Return = 0x10A5A4C0;
     __asm {
         popad
         jmp dword ptr[Return]
+    }
+}
+
+void onPageLoad(GUIPageWaitLaunch* page)
+{
+    static GUIPageWaitLaunch* lastPage;
+    if (page != lastPage && page->Title() != nullptr && wcscmp(page->Title(), L"Video Options") == 0) {
+        page->sRes() = reinterpret_cast<uintptr_t>(Graphics::videoSettingsDisplayModes);
+        page->sResCount() = Graphics::GetResolutionCount();
+        page->sResCount2() = Graphics::GetResolutionCount();
+    }
+    lastPage = page;
+}
+
+int GuiPageWaitLoadEntry = 0x10A66746;
+__declspec(naked) void GuiPageWaitLoad() {
+    static GUIPageWaitLaunch* page;
+    __asm {
+        je skip
+        mov dword ptr[eax], 0x10C02C40
+        mov[page], eax
+        pushad
+    }
+    onPageLoad(page);
+    __asm {
+        popad
+        skip:
+        ret
     }
 }
 
@@ -398,12 +426,15 @@ __declspec(naked) void StickyCamContextMenuBlock() {
 
 
 static std::map<std::pair<std::wstring, std::wstring>, std::wstring> overrideMap;
-static void InitLabelOverrides() {
-    overrideMap[{L"TitlePage", L"LAN_Menu"}] = L"Reloaded Session";
-    overrideMap[{L"TitrePage.Caption", L"LAN_Menu"}] = L"Reloaded Session";
+void CodeCaves::SetLabelOverride(const wchar_t* element, const wchar_t* page, std::wstring message) {
+    overrideMap[{element, page}] = message;
+}
 
-    overrideMap[{L"MainPage_Live.Caption", L"Menu_Multi"}] = L" ";
-    overrideMap[{L"MainPage_LAN.Caption", L"Menu_Multi"}] = L"Play Multiplayer";
+static void InitLabelOverrides() {
+    CodeCaves::SetLabelOverride(L"TitlePage", L"LAN_Menu", L"Reloaded Session");
+    CodeCaves::SetLabelOverride(L"TitrePage.Caption", L"LAN_Menu", L"Reloaded Session");
+    CodeCaves::SetLabelOverride(L"MainPage_Live.Caption", L"Menu_Multi", L" ");
+    CodeCaves::SetLabelOverride(L"MainPage_LAN.Caption", L"Menu_Multi", L"Play Multiplayer");
 
     HKL layout = GetKeyboardLayout(0);
     UINT virtualKey = MapVirtualKeyEx(consoleKeyBind, MAPVK_VSC_TO_VK, layout);
@@ -414,10 +445,10 @@ static void InitLabelOverrides() {
 
     if (chars > 0) {
         std::wstring message = L"Mouse Sensitivity - set with sens <value> in console (bind " + std::wstring(1, buffer[0]) + L")";
-        overrideMap[{L"MouseSensitive.Caption", L"Controller_Settings"}] = message;
+        CodeCaves::SetLabelOverride(L"MouseSensitive.Caption", L"Controller_Settings", message);
     }
     else {
-        overrideMap[{L"MouseSensitive.Caption", L"Controller_Settings"}] = L"Mouse Sensitivity - set with sens <value> in console";
+        CodeCaves::SetLabelOverride(L"MouseSensitive.Caption", L"Controller_Settings", L"Mouse Sensitivity - set with sens <value> in console");
     }
 }
 
@@ -522,7 +553,8 @@ void CodeCaves::Initialize()
     MemoryWriter::WriteJump(OnStateChangeEntry, OnStateChange);
     MemoryWriter::WriteJump(LoadTextEntry, LoadText);
 
-    MemoryWriter::WriteFunctionPtr(GuiPageWaitLoadEntry, GuiPageWaitLoad);
+    MemoryWriter::WriteFunctionPtr(GuiPageWaitUpdateEntry, GuiPageWaitUpdate);
+    MemoryWriter::WriteJump(GuiPageWaitLoadEntry, GuiPageWaitLoad);
 
     if (Config::disableStickyCamContextMenu) {
         MemoryWriter::WriteJump(StickyCamContextMenuBlockEntry, StickyCamContextMenuBlock);

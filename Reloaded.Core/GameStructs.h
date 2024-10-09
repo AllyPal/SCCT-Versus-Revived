@@ -153,4 +153,16 @@ struct GUIPageWaitLaunch {
     CompCol* Components() {
         return *reinterpret_cast<CompCol**>(unspecified + (0x190));
     }
+
+    uint32_t& sRes() {
+        return *reinterpret_cast<uint32_t*>(unspecified + (0x2F0));
+    }
+
+    uint32_t& sResCount() {
+        return *reinterpret_cast<uint32_t*>(unspecified + (0x2F4));
+    }
+
+    uint32_t& sResCount2() {
+        return *reinterpret_cast<uint32_t*>(unspecified + (0x2F8));
+    }
 };

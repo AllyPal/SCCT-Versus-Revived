@@ -87,7 +87,7 @@ int sendMessage(SOCKET _socket, u_short hostshort, u_long hostlong, uintptr_t me
     if (Config::useDirectConnect) {
 #pragma warning(push)
 #pragma warning(disable: 4996)
-        to.sin_addr.s_addr = inet_addr(StringOperations::WStringToString(Config::directConnectIp).c_str());
+        to.sin_addr.s_addr = inet_addr(StringOperations::wStringToString(Config::directConnectIp).c_str());
 #pragma warning(pop)
         to.sin_port = htons(hostshort);
         auto directConnectResult = SendPacket(to, messagePtr, _socket, messageLength);
@@ -258,7 +258,7 @@ std::string convertToIpPortString(const uint32_t* ip, const uint16_t* port) {
 
 void handleListPacket(std::wstring packetId, uint8_t* buffer, uint32_t recvBytes) {
     const size_t ipPortSize = 6;
-    std::cout << "Server list packet: " << StringOperations::WStringToString(packetId) << std::endl;
+    std::cout << "Server list packet: " << StringOperations::wStringToString(packetId) << std::endl;
     const int ipDataOffset = 24;
     if (ipDataOffset >= recvBytes) {
         std::cout << "Server list is empty" << std::endl;
@@ -286,7 +286,7 @@ void handleListPacket(std::wstring packetId, uint8_t* buffer, uint32_t recvBytes
 }
 
 void handleOther(std::wstring packetId, uint8_t* buffer) {
-    std::cout << "Unknown master server packet: " << StringOperations::WStringToString(packetId) << std::endl;
+    std::cout << "Unknown master server packet: " << StringOperations::wStringToString(packetId) << std::endl;
 }
 
 void handlePacket(uint32_t clientIP, uint16_t clientPort, uint32_t recvBytes, uint8_t* buffer) {
@@ -298,7 +298,7 @@ void handlePacket(uint32_t clientIP, uint16_t clientPort, uint32_t recvBytes, ui
 
     /*std::cout << "From IP: " << ipStr << ":" << clientPort << " Bytes: " << recvBytes << std::endl;
     std::wstring localWString(buffer, recvBytes/2);
-    std::cout << StringOperations::WStringToString(localWString) << std::endl;*/
+    std::cout << StringOperations::wStringToString(localWString) << std::endl;*/
 
     static auto masterIpPort = GetOrCacheDnsIpThreaded(Config::masterServerDns);
     if (clientIP == masterIpPort.first && clientPort == masterIpPort.second && recvBytes >= 24) {

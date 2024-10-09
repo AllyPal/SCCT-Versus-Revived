@@ -23,5 +23,6 @@ public:
 	static bool IsListenServer();
 	static void EnableProcessSecurity();
 	static void OncePerFrame();
+	static void SetLabelOverride(const wchar_t* element, const wchar_t* page, std::wstring message);
 	static LvIn* lvIn;
 };

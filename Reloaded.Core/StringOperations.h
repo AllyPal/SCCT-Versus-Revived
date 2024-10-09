@@ -7,11 +7,12 @@
 #include <chrono>
 #include <timeapi.h>
 #include <Windows.h>
+#include <codecvt>
 
 class StringOperations
 {
 public:
-    static std::string WStringToString(const std::wstring& wstr)
+    static std::string wStringToString(const std::wstring& wstr)
     {
         if (wstr.empty()) return std::string();
 
@@ -20,6 +21,14 @@ public:
         WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &str[0], size_needed, NULL, NULL);
 
         return str;
+    }
+
+    static std::wstring stringToWString(const std::string& str) {
+        int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), static_cast<int>(str.size()), nullptr, 0);
+        std::wstring wstr(size_needed, L'\0');
+        MultiByteToWideChar(CP_UTF8, 0, str.c_str(), static_cast<int>(str.size()), &wstr[0], size_needed);
+
+        return wstr;
     }
 
     static std::string toHexString(uintptr_t address) {
@@ -40,4 +49,3 @@ public:
         return ss.str();
     }
 };
-
