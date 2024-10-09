@@ -1,6 +1,6 @@
-# SCCT Versus Revived
+# SCCT Versus Reloaded
 
-Enhancements and fixes for Splinter Cell Chaos Theory (SCCT) Versus.
+An unofficial community patch that brings enhancements and fixes for Splinter Cell Chaos Theory (SCCT) Versus.
 
 ## Features:
 * Allows players to connect to other players over the internet (without a VPN)
