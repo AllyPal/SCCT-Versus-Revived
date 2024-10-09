@@ -26,6 +26,7 @@ static int RenderHeight = 0;
 
 std::vector<DisplayModePair> displayModePairs;
 UcString* Graphics::videoSettingsDisplayModes;
+UcString* Graphics::videoSettingsDisplayModesCmd;
 
 int D3DCreateResultEntry = 0x1095B986;
 __declspec(naked) void D3DCreateResult() {
@@ -131,20 +132,28 @@ std::vector<DisplayModePair> GetDisplayModesWithHighestRefreshRate() {
     for (const auto& entry : bestModes) {
         const ResolutionInfo& info = entry.second;
 
-        std::string modeWithFormat = std::to_string(info.width) + "x" +
-            std::to_string(info.height) + "x32 F";
+        std::wstring modeWithFormat = std::to_wstring(info.width) + L"x" +
+            std::to_wstring(info.height) + L"x32 F";
 
         auto aspectRatio = GetClosestAspectRatio(info.width, info.height);
-        std::string modeWithAsterisk = std::to_string(info.width) + " * " +
-            std::to_string(info.height) + " " + aspectRatio;
-
-        displayModes.push_back({ modeWithFormat, modeWithAsterisk, info.width, info.height, aspectRatio });
+        displayModes.push_back({ modeWithFormat, info.width, info.height, aspectRatio });
     }
     
     return SortDisplayModes(displayModes);
 }
 
-UcString* FormatDisplayModesForOutput() {
+UcString* VectorToUcString(std::vector<UcString> vector) {
+    auto outSize = vector.size();
+    UcString* rawArray = new UcString[outSize];
+
+    for (size_t i = 0; i < outSize; ++i) {
+        rawArray[i] = vector[i];
+    }
+
+    return rawArray;
+}
+
+UcString* VideoSettingsDisplayOutput() {
     std::vector<UcString> vector;
 
     for (const auto& mode : displayModePairs) {
@@ -165,14 +174,29 @@ UcString* FormatDisplayModesForOutput() {
         vector.push_back(overrideEntry);
     }
 
-    auto outSize = vector.size();
-    UcString* rawArray = new UcString[outSize];
+    return VectorToUcString(vector);
+}
 
-    for (size_t i = 0; i < outSize; ++i) {
-        rawArray[i] = vector[i];
+UcString* VideoSettingsDisplayCmd() {
+    std::vector<UcString> vector;
+
+    for (const auto& mode : displayModePairs) {
+        std::wstring displayText = mode.modeWithFormat;
+
+        UcString overrideEntry;
+
+        overrideEntry.text = new wchar_t[displayText.size() + 1];
+
+        std::copy(displayText.begin(), displayText.end(), overrideEntry.text);
+        overrideEntry.text[displayText.size()] = L'\0';
+
+        overrideEntry.length = static_cast<int>(displayText.size() + 1);
+        overrideEntry.alsoLength = static_cast<int>(displayText.size() + 1);
+
+        vector.push_back(overrideEntry);
     }
 
-    return rawArray;
+    return VectorToUcString(vector);
 }
 
 static D3DPRESENT_PARAMETERS d3dppReplacement;
@@ -205,8 +229,10 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
         d3dppReplacement.FullScreen_RefreshRateInHz = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
     }
 
+    // TODO: Refactor
     displayModePairs = GetDisplayModesWithHighestRefreshRate();
-    Graphics::videoSettingsDisplayModes = FormatDisplayModesForOutput();
+    Graphics::videoSettingsDisplayModes = VideoSettingsDisplayOutput();
+    Graphics::videoSettingsDisplayModesCmd = VideoSettingsDisplayCmd();
     //CodeCaves::SetLabelOverride(L"sRes", L"Video_Settings", output);
     //if (caps->MaxAnisotropy != 0) {
     //    UINT qualityLevels;

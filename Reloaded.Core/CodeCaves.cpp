@@ -132,6 +132,29 @@ __declspec(naked) void GuiPageWaitUpdate() {
     }
 }
 
+void OnSPlaProCreated(SPlaPro* plaPro) {
+    plaPro->sGameRes().sRes() = reinterpret_cast<uintptr_t>(Graphics::videoSettingsDisplayModesCmd);
+    plaPro->sGameRes().sResCount() = Graphics::GetResolutionCount();
+    plaPro->sGameRes().sResCount() = Graphics::GetResolutionCount();
+}
+
+int SPlaProCreatedEntry = 0x10AEF546;
+__declspec(naked) void SPlaProCreated() {
+    static SPlaPro* plaPro;
+    __asm {
+        je skip
+        mov dword ptr[eax], 0x10BFC340
+        mov dword ptr[plaPro], eax
+        pushad
+    }
+    OnSPlaProCreated(plaPro);
+    __asm {
+        popad
+        skip:
+        ret
+    }
+}
+
 void onPageLoad(GUIPageWaitLaunch* page)
 {
     static GUIPageWaitLaunch* lastPage;
@@ -555,6 +578,7 @@ void CodeCaves::Initialize()
 
     MemoryWriter::WriteFunctionPtr(GuiPageWaitUpdateEntry, GuiPageWaitUpdate);
     MemoryWriter::WriteJump(GuiPageWaitLoadEntry, GuiPageWaitLoad);
+    MemoryWriter::WriteJump(SPlaProCreatedEntry, SPlaProCreated);
 
     if (Config::disableStickyCamContextMenu) {
         MemoryWriter::WriteJump(StickyCamContextMenuBlockEntry, StickyCamContextMenuBlock);

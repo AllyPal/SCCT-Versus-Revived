@@ -179,3 +179,11 @@ struct GUIPageWaitLaunch {
         return *reinterpret_cast<UcStringArray*>(unspecified + (0x2F0));
     }
 };
+
+struct SPlaPro {
+    std::byte unspecified[0x1000];
+
+    UcStringArray& sGameRes() {
+        return *reinterpret_cast<UcStringArray*>(unspecified + (0xD8));
+    }
+};

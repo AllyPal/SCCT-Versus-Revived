@@ -4,8 +4,7 @@
 #include "GameStructs.h"
 
 struct DisplayModePair {
-    std::string modeWithFormat;
-    std::string modeWithAsterisk;
+    std::wstring modeWithFormat;
     UINT width;
     UINT height;
     std::string aspectRatio;
@@ -29,5 +28,6 @@ public:
 	static void Initialize();
 	static std::chrono::steady_clock::time_point lastFrameTime;
     static UcString* videoSettingsDisplayModes;
+    static UcString* videoSettingsDisplayModesCmd;
     static int GetResolutionCount();
 };
