@@ -1,12 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <chrono>
-
-struct DisplayModeOverride {
-    wchar_t* displayText;
-    int length;
-    int alsoLength;
-};
+#include "GameStructs.h"
 
 struct DisplayModePair {
     std::string modeWithFormat;
@@ -33,6 +28,6 @@ class Graphics
 public:
 	static void Initialize();
 	static std::chrono::steady_clock::time_point lastFrameTime;
-    static DisplayModeOverride* videoSettingsDisplayModes;
+    static UcString* videoSettingsDisplayModes;
     static int GetResolutionCount();
 };

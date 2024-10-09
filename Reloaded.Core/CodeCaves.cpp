@@ -136,9 +136,9 @@ void onPageLoad(GUIPageWaitLaunch* page)
 {
     static GUIPageWaitLaunch* lastPage;
     if (page != lastPage && page->Title() != nullptr && wcscmp(page->Title(), L"Video Options") == 0) {
-        page->sRes() = reinterpret_cast<uintptr_t>(Graphics::videoSettingsDisplayModes);
-        page->sResCount() = Graphics::GetResolutionCount();
-        page->sResCount2() = Graphics::GetResolutionCount();
+        page->sResArray().sRes() = reinterpret_cast<uintptr_t>(Graphics::videoSettingsDisplayModes);
+        page->sResArray().sResCount() = Graphics::GetResolutionCount();
+        page->sResArray().sResCount2() = Graphics::GetResolutionCount();
     }
     lastPage = page;
 }

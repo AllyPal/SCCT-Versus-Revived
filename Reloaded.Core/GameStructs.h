@@ -4,6 +4,27 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+struct UcString {
+    wchar_t* text;
+    int length;
+    int alsoLength;
+};
+
+struct UcStringArray
+{
+    std::byte unspecified[0xc];
+    uint32_t& sRes() {
+        return *reinterpret_cast<uint32_t*>(unspecified + (0x0));
+    }
+
+    uint32_t& sResCount() {
+        return *reinterpret_cast<uint32_t*>(unspecified + (0x4));
+    }
+
+    uint32_t& sResCount2() {
+        return *reinterpret_cast<uint32_t*>(unspecified + (0x8));
+    }
+};
 
 struct SLnSrvLnk {
     std::byte unspecified[0x1000];
@@ -154,15 +175,7 @@ struct GUIPageWaitLaunch {
         return *reinterpret_cast<CompCol**>(unspecified + (0x190));
     }
 
-    uint32_t& sRes() {
-        return *reinterpret_cast<uint32_t*>(unspecified + (0x2F0));
-    }
-
-    uint32_t& sResCount() {
-        return *reinterpret_cast<uint32_t*>(unspecified + (0x2F4));
-    }
-
-    uint32_t& sResCount2() {
-        return *reinterpret_cast<uint32_t*>(unspecified + (0x2F8));
+    UcStringArray& sResArray() {
+        return *reinterpret_cast<UcStringArray*>(unspecified + (0x2F0));
     }
 };

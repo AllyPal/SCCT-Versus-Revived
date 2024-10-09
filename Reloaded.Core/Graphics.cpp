@@ -12,6 +12,7 @@
 #include "MemoryWriter.h"
 #include "CodeCaves.h"
 #include "Input.h"
+#include "GameStructs.h"
 
 #define D3DX_PI    (3.14159265358979323846)
 
@@ -24,7 +25,7 @@ static int RenderWidth = 0;
 static int RenderHeight = 0;
 
 std::vector<DisplayModePair> displayModePairs;
-DisplayModeOverride* Graphics::videoSettingsDisplayModes;
+UcString* Graphics::videoSettingsDisplayModes;
 
 int D3DCreateResultEntry = 0x1095B986;
 __declspec(naked) void D3DCreateResult() {
@@ -143,20 +144,20 @@ std::vector<DisplayModePair> GetDisplayModesWithHighestRefreshRate() {
     return SortDisplayModes(displayModes);
 }
 
-DisplayModeOverride* FormatDisplayModesForOutput() {
-    std::vector<DisplayModeOverride> vector;
+UcString* FormatDisplayModesForOutput() {
+    std::vector<UcString> vector;
 
     for (const auto& mode : displayModePairs) {
         std::wstring displayText = std::to_wstring(mode.width) + L" x " +
             std::to_wstring(mode.height) + L" " +
             StringOperations::stringToWString(mode.aspectRatio);
 
-        DisplayModeOverride overrideEntry;
+        UcString overrideEntry;
 
-        overrideEntry.displayText = new wchar_t[displayText.size() + 1];
+        overrideEntry.text = new wchar_t[displayText.size() + 1];
 
-        std::copy(displayText.begin(), displayText.end(), overrideEntry.displayText);
-        overrideEntry.displayText[displayText.size()] = L'\0';
+        std::copy(displayText.begin(), displayText.end(), overrideEntry.text);
+        overrideEntry.text[displayText.size()] = L'\0';
 
         overrideEntry.length = static_cast<int>(displayText.size()+1);
         overrideEntry.alsoLength = static_cast<int>(displayText.size()+1);
@@ -165,7 +166,7 @@ DisplayModeOverride* FormatDisplayModesForOutput() {
     }
 
     auto outSize = vector.size();
-    DisplayModeOverride* rawArray = new DisplayModeOverride[outSize];
+    UcString* rawArray = new UcString[outSize];
 
     for (size_t i = 0; i < outSize; ++i) {
         rawArray[i] = vector[i];
