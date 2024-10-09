@@ -562,9 +562,8 @@ static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
     D3DDISPLAYMODE d3dDisplayMode;
     pDevice->GetDisplayMode(&d3dDisplayMode);
 
-    float displayHeight = static_cast<float>(d3dDisplayMode.Height);
-    float displayWidth = static_cast<float>(d3dDisplayMode.Width);
-    displayWidth = min(displayWidth, d3dDisplayMode.Height * (16.0f / 9.0));
+    float displayHeight = static_cast<float>(RenderHeight);
+    float displayWidth = min(RenderWidth, RenderHeight * (16.0f / 9.0));
     //float displayAspectRatio = displayHeight/ displayWidth;
     auto renderAspectRatio = fabs(roundf((projMatrix->_11 / projMatrix->_22) * 100.0f) / 100.0f);
     const float fourByThreeAspect = 0.75f;
