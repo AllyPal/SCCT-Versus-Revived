@@ -226,7 +226,10 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
     }
 
     if (Config::forceMaxRefreshRate && !Config::labs_borderlessFullscreen) {
-        d3dppReplacement.FullScreen_RefreshRateInHz = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
+        Logger::log(std::format("Getting max refresh rate for {} {}", d3dpp->BackBufferWidth, d3dpp->BackBufferHeight));
+        auto maxRefreshRate = GetMaxRefreshRate(d3dpp->BackBufferWidth, d3dpp->BackBufferHeight);
+        Logger::log(std::format("Setting refresh rate to {}", maxRefreshRate));
+        d3dppReplacement.FullScreen_RefreshRateInHz = maxRefreshRate;
     }
 
     // TODO: Refactor
