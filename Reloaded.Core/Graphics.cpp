@@ -24,7 +24,7 @@ static int BackBufferHeight = 0;
 static int RenderWidth = 0;
 static int RenderHeight = 0;
 
-std::vector<DisplayModePair> displayModePairs;
+static std::vector<DisplayModePair> displayModePairs;
 UcString* Graphics::videoSettingsDisplayModes;
 UcString* Graphics::videoSettingsDisplayModesCmd;
 
@@ -76,6 +76,7 @@ std::string GetClosestAspectRatio(UINT width, UINT height) {
     const KnownAspectRatio aspectRatios[] = {
         {16.0, 9.0, "(16:9)"},
         {4.0, 3.0, "(4:3)"},
+        {5.0, 4.0, "(5:4)"},
         {21.0, 9.0, "(21:9 stretched)"},
         {16.0, 10.0, "(16:10)"},
         {3.0, 2.0, "(3:2)"},
@@ -99,7 +100,7 @@ std::string GetClosestAspectRatio(UINT width, UINT height) {
 
 std::vector<DisplayModePair> SortDisplayModes(std::vector<DisplayModePair>& modes) {
     auto sortByHeightThenWidth = [](const DisplayModePair& a, const DisplayModePair& b) {
-        if (a.height == b.height) {
+        if (a.width != b.width) {
             return a.width > b.width;
         }
         return a.height > b.height;
@@ -118,10 +119,8 @@ std::vector<DisplayModePair> GetDisplayModesWithHighestRefreshRate() {
 
     D3DDISPLAYMODE displayMode;
     for (UINT i = 0; i < modeCount; i++) {
-        if (SUCCEEDED(d3d->EnumAdapterModes(D3DADAPTER_DEFAULT, i, &displayMode))) {
-            std::string key = std::to_string(displayMode.Width) + "x" +
-                std::to_string(displayMode.Height) + "x" +
-                std::to_string(displayMode.Format);
+        if (SUCCEEDED(d3d->EnumAdapterModes(D3DADAPTER_DEFAULT, i, &displayMode)) && displayMode.Width >= 640 && displayMode.Height >= 480) {
+            std::string key = std::to_string(displayMode.Width) + "x" + std::to_string(displayMode.Height);
 
             if (bestModes.find(key) == bestModes.end() || displayMode.RefreshRate > bestModes[key].refreshRate) {
                 bestModes[key] = { displayMode.Width, displayMode.Height, displayMode.RefreshRate };
@@ -129,14 +128,27 @@ std::vector<DisplayModePair> GetDisplayModesWithHighestRefreshRate() {
         }
     }
 
+    auto maxWidth = std::max_element(bestModes.begin(), bestModes.end(),
+        [](const auto& a, const auto& b) {
+            return a.second.width < b.second.width;
+        })->second.width;
+
+    auto maxHeight = std::max_element(bestModes.begin(), bestModes.end(),
+        [](const auto& a, const auto& b) {
+            return a.second.height < b.second.height;
+        })->second.height;
+
+    auto nativeAspectRatio = GetClosestAspectRatio(maxWidth, maxHeight);
+
     for (const auto& entry : bestModes) {
         const ResolutionInfo& info = entry.second;
 
-        std::wstring modeWithFormat = std::to_wstring(info.width) + L"x" +
-            std::to_wstring(info.height) + L"x32 F";
-
         auto aspectRatio = GetClosestAspectRatio(info.width, info.height);
-        displayModes.push_back({ modeWithFormat, info.width, info.height, aspectRatio });
+        if (aspectRatio == nativeAspectRatio || aspectRatio == "(4:3)" || aspectRatio == "(16:9)" || info.height == maxHeight || info.width == maxWidth) {
+            std::wstring modeWithFormat = std::to_wstring(info.width) + L"x" +
+                std::to_wstring(info.height) + L"x32 F";
+            displayModes.push_back({ modeWithFormat, info.width, info.height, aspectRatio });
+        }
     }
     
     return SortDisplayModes(displayModes);
@@ -183,7 +195,7 @@ UcString* VideoSettingsDisplayCmd() {
     for (const auto& mode : displayModePairs) {
         std::wstring displayText = mode.modeWithFormat;
 
-        UcString overrideEntry;
+        UcString overrideEntry{};
 
         overrideEntry.text = new wchar_t[displayText.size() + 1];
 
@@ -232,12 +244,9 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
         d3dppReplacement.FullScreen_RefreshRateInHz = maxRefreshRate;
     }
 
-    // TODO: Refactor
-    if (displayModePairs.size() == 0) {
-        displayModePairs = GetDisplayModesWithHighestRefreshRate();
-        Graphics::videoSettingsDisplayModes = VideoSettingsDisplayOutput();
-        Graphics::videoSettingsDisplayModesCmd = VideoSettingsDisplayCmd();
-    }
+    displayModePairs = GetDisplayModesWithHighestRefreshRate();
+    Graphics::videoSettingsDisplayModes = VideoSettingsDisplayOutput();
+    Graphics::videoSettingsDisplayModesCmd = VideoSettingsDisplayCmd();
     //CodeCaves::SetLabelOverride(L"sRes", L"Video_Settings", output);
     //if (caps->MaxAnisotropy != 0) {
     //    UINT qualityLevels;
