@@ -13,6 +13,17 @@ constexpr int frameRateLimit_hosting_max = 165;
 constexpr int frameRateLimit_client_min = 30;
 constexpr int frameRateLimit_client_max = 1000;
 
+#ifdef _DEBUG
+	#define debug_cout std::cout << "DEBUG: "
+	#define debug_wcout std::wcout << L"DEBUG: "
+	#define debug_cerr std::cerr << "DEBUG: "
+
+#else
+	#define debug_cout if (false) std::cout
+	#define debug_wcout if (false) std::wcout
+	#define debug_cerr if (false) std::cerr
+#endif
+
 // add headers that you want to pre-compile here
 #include "framework.h"
 

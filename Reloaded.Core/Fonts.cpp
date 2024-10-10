@@ -9,7 +9,7 @@ static std::unordered_map<std::wstring, GUIFont*> fontMap;
 static void OnFontCreated(GUIFont* font) {
 	std::wstring keyName(font->KeyName());
 	fontMap[keyName] = font;
-	std::wcout << keyName << std::endl;
+	debug_wcout << keyName << std::endl;
 }
 
 static int FontCreatedEntry = 0x10A69136;

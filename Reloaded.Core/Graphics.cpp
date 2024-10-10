@@ -489,7 +489,7 @@ void OnDeviceCreated() {
 
 HRESULT CreateDeviceOverride(UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DDevice8** ppReturnedDeviceInterface) {
     if (pDevice == nullptr) {
-        std::cout << "CreateDevice" << std::endl;
+        debug_cout << "CreateDevice" << std::endl;
         auto result = d3d->CreateDevice(Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
         pDevice = *ppReturnedDeviceInterface;
         return result;
@@ -500,35 +500,35 @@ HRESULT CreateDeviceOverride(UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWin
         case D3D_OK:
         case D3DERR_DEVICENOTRESET:
         {
-            std::cout << "Reset" << std::endl;
-            std::cout << "W: " << d3dppReplacement.BackBufferWidth << "H: " << d3dppReplacement.BackBufferHeight << std::endl;
+            debug_cout << "Reset" << std::endl;
+            debug_cout << "W: " << d3dppReplacement.BackBufferWidth << "H: " << d3dppReplacement.BackBufferHeight << std::endl;
             result = pDevice->Reset(&d3dppReplacement);
             if (!SUCCEEDED(result)) {
                 switch (result) {
                 case D3DERR_DEVICELOST:
-                    std::cout << "Error: Device lost and cannot be reset at this time." << std::endl;
+                    debug_cout << "Error: Device lost and cannot be reset at this time." << std::endl;
                     break;
                 case D3DERR_DEVICENOTRESET:
-                    std::cout << "Error: Device is lost but can be reset." << std::endl;
+                    debug_cout << "Error: Device is lost but can be reset." << std::endl;
                     break;
                 case D3DERR_OUTOFVIDEOMEMORY:
-                    std::cout << "Error: Out of video memory." << std::endl;
+                    debug_cout << "Error: Out of video memory." << std::endl;
                     break;
                 case E_OUTOFMEMORY:
-                    std::cout << "Error: Out of system memory." << std::endl;
+                    debug_cout << "Error: Out of system memory." << std::endl;
                     break;
                 case D3DERR_INVALIDCALL:
-                    std::cout << "Error: Invalid function call." << std::endl;
+                    debug_cout << "Error: Invalid function call." << std::endl;
                     break;
                 default:
-                    std::cout << "Error: Unknown error, HRESULT = " << std::hex << result << std::endl;
+                    debug_cout << "Error: Unknown error, HRESULT = " << std::hex << result << std::endl;
                     break;
                 }
             }
         }
             break;
         default:
-            std::cout << "Unexpected TestCooperativeLevel result" << std::endl;
+            debug_cout << "Unexpected TestCooperativeLevel result" << std::endl;
             break;
         }
 

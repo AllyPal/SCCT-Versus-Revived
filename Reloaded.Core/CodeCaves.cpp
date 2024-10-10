@@ -132,7 +132,15 @@ __declspec(naked) void GuiPageWaitUpdate() {
     }
 }
 
+void HideConsoleWindow() {
+#ifndef _DEBUG
+    HWND consoleWindow = GetConsoleWindow();
+    ShowWindow(consoleWindow, SW_HIDE);
+#endif
+}
+
 void OnSPlaProCreated(SPlaPro* plaPro) {
+    HideConsoleWindow();
     plaPro->sGameRes().sRes() = reinterpret_cast<uintptr_t>(Graphics::videoSettingsDisplayModesCmd);
     plaPro->sGameRes().sResCount() = Graphics::GetResolutionCount();
     plaPro->sGameRes().sResCount() = Graphics::GetResolutionCount();
