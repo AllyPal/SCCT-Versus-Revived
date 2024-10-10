@@ -8,6 +8,10 @@
 #include <timeapi.h>
 #include <Windows.h>
 #include <codecvt>
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <locale>
 
 class StringOperations
 {
@@ -47,5 +51,14 @@ public:
         std::stringstream ss;
         ss << address;
         return ss.str();
+    }
+
+    static std::wstring toLowercase(const std::wstring& input) {
+        std::wstring result = input;
+        std::transform(result.begin(), result.end(), result.begin(),
+            [](wchar_t c) {
+                return towlower(c);
+            });
+        return result;
     }
 };

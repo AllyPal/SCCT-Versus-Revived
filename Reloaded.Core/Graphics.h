@@ -31,3 +31,10 @@ public:
     static UcString* videoSettingsDisplayModesCmd;
     static int GetResolutionCount();
 };
+
+#define D3DX_PI    (3.14159265358979323846)
+const double originalAspectRatioWidth = 4.0;
+const double originalAspectRatioHeight = 3.0;
+const double originalAspectRatio = originalAspectRatioHeight / originalAspectRatioWidth;
+const double degToRadConversionFactor = D3DX_PI / 180.0;
+const double radToDegConversionFactor = 180.0 / D3DX_PI;

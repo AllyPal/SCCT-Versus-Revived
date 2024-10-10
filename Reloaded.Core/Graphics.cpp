@@ -14,8 +14,6 @@
 #include "Input.h"
 #include "GameStructs.h"
 
-#define D3DX_PI    (3.14159265358979323846)
-
 static IDirect3D8* d3d;
 static LPDIRECT3DDEVICE8 pDevice;
 static D3DCAPS8* caps;
@@ -211,12 +209,21 @@ UcString* VideoSettingsDisplayCmd() {
     return VectorToUcString(vector);
 }
 
+static float actualAspectRatio = 1;
+static float cappedAspectRatio = 1;
 static D3DPRESENT_PARAMETERS d3dppReplacement;
 static D3DPRESENT_PARAMETERS* overriddenD3dpp;
 void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
-    //PrintParams(d3dpp);
     RenderWidth = d3dpp->BackBufferWidth;
     RenderHeight = d3dpp->BackBufferHeight;
+
+    float displayHeight = static_cast<float>(RenderHeight);
+    float displayWidth = static_cast<float>(RenderWidth);
+    actualAspectRatio = displayWidth / displayHeight;
+
+    displayWidth = min(displayWidth, RenderHeight * (16.0f / 9.0));
+    cappedAspectRatio = displayWidth / displayHeight;
+    Input::aspectRatioMenuVertMouseInputMultiplier = actualAspectRatio / (4.0 / 3.0);
 
     ZeroMemory(&d3dppReplacement, sizeof(d3dppReplacement));
     d3dppReplacement = *d3dpp;
@@ -247,6 +254,7 @@ void ProcessD3DPresentParameters(D3DPRESENT_PARAMETERS* d3dpp) {
     displayModePairs = GetDisplayModesWithHighestRefreshRate();
     Graphics::videoSettingsDisplayModes = VideoSettingsDisplayOutput();
     Graphics::videoSettingsDisplayModesCmd = VideoSettingsDisplayCmd();
+
     //CodeCaves::SetLabelOverride(L"sRes", L"Video_Settings", output);
     //if (caps->MaxAnisotropy != 0) {
     //    UINT qualityLevels;
@@ -635,12 +643,12 @@ D3DMATRIX* D3DXMatrixPerspectiveFovLH(D3DMATRIX* pOut, float fovy, float aspect,
 }
 
 float RadToDeg(float radians) {
-    return radians * (180.0f / D3DX_PI);
+    return radians * radToDegConversionFactor;
 }
 
 float DegreesToRadians(float degrees)
 {
-    return degrees * (D3DX_PI / 180.0f);
+    return degrees * degToRadConversionFactor;
 }
 
 static float GetOriginalFovY(float m11) {
@@ -707,6 +715,9 @@ __declspec(naked) void endHudMenuRender() {
 
 static void SetupProjectionMatrix(D3DMATRIX* projMatrix)
 {
+    if (!Config::widescreenAspectRatioFix) {
+        return;
+    }
     D3DDISPLAYMODE d3dDisplayMode;
     pDevice->GetDisplayMode(&d3dDisplayMode);
 
@@ -860,68 +871,77 @@ void LimitFrameRate() {
 }
 
 double ConvertFOV(double horizontalFOV, double newAspectRatio) {
-    double horizontalFOVRad = horizontalFOV * D3DX_PI / 180.0;
-    double originalAspectRatioWidth = 4.0;
-    double originalAspectRatioHeight = 3.0;
-    double verticalFOVRad = 2 * atan(tan(horizontalFOVRad / 2) * originalAspectRatioHeight / originalAspectRatioWidth);
-    double verticalFOV = verticalFOVRad * 180.0 / D3DX_PI;
-    double newAspectRatioWidth = newAspectRatio;
-    double newHorizontalFOVRad = 2 * atan(tan(verticalFOVRad / 2) * newAspectRatioWidth);
-    double newHorizontalFOV = newHorizontalFOVRad * 180.0 / D3DX_PI;
+    double horizontalFOVRad = horizontalFOV * degToRadConversionFactor;
+    double verticalFOVRad = 2 * atan(tan(horizontalFOVRad / 2) * originalAspectRatio);
+    double newHorizontalFOVRad = 2 * atan(tan(verticalFOVRad / 2) * newAspectRatio);
+    double newHorizontalFOV = newHorizontalFOVRad * radToDegConversionFactor;
 
     return min(newHorizontalFOV, Config::widescreenFovCap);
 }
 
-float displayHeightLast = 0;
-float displayWidthLast = 0;
-float originalSfv = 0.0;
-float originalDfv = 0.0;
-float hSfv = 0.0;
-float hDfv = 0.0;
-
-void widescreenFovFix() {
+float ScaleFov(float fov) {
     if (Config::widescreenAspectRatioFix) {
-        D3DDISPLAYMODE d3dDisplayMode;
-        pDevice->GetDisplayMode(&d3dDisplayMode);
-        float defv = CodeCaves::lvIn->lPlC()->Defv();
-        float displayHeight = static_cast<float>(d3dDisplayMode.Height);
-        float displayWidth = static_cast<float>(d3dDisplayMode.Width);
-        displayWidth = min(displayWidth, d3dDisplayMode.Height * (16.0f / 9.0));
+        fov = ConvertFOV(fov, cappedAspectRatio);
+    }
 
-        if (displayWidthLast != displayWidth || displayHeightLast != displayHeight || (defv != hSfv && defv != hDfv)) {
-            if (originalSfv == 0.0) {
-                originalSfv = CodeCaves::lvIn->lPlC()->Sfv();
-                originalDfv = CodeCaves::lvIn->lPlC()->Dfv();
-            }
+    return fov;
+}
 
-            bool wasSfv = CodeCaves::lvIn->lPlC()->Defv() == hSfv;
-            bool wasDfv = CodeCaves::lvIn->lPlC()->Defv() == hDfv;
+int WidescreenFirstPersonMeshFovFix2ntry = 0x10A0B126;
+__declspec(naked) void WidescreenFirstPersonMeshFovFix() {
+    static float fov;
+    __asm {
+        mov     ecx, [eax+0x308]
+        mov dword ptr[fov], ecx
+        pushad
+    }
+    fov = ScaleFov(fov);
 
-            auto aspectRatio = displayWidth / displayHeight;
-            Input::aspectRatioMenuVertMouseInputMultiplier = aspectRatio / (4.0 / 3.0);
-            hSfv = ConvertFOV(originalSfv, aspectRatio);
-            hDfv = ConvertFOV(originalDfv, aspectRatio);
+    static int Return = 0x10A0B12C;
+    __asm {
+        popad
+        mov ecx, dword ptr[fov]
+        jmp dword ptr[Return]
+    }
+}
 
-            if (wasSfv) {
-                CodeCaves::lvIn->lPlC()->Defv() = hSfv;
-            }
-            else if (wasDfv) {
-                CodeCaves::lvIn->lPlC()->Defv() = hDfv;
-            }
+int WidescreenErFovFixEntry = 0x10AF8E07;
+__declspec(naked) void WidescreenErFovFix() {
+    static float fov;
+    __asm {
+        mov     ecx, [esi + 0x308]
+        mov dword ptr[fov], ecx
+        pushad
+    }
+    fov = ScaleFov(fov);
 
-            // last calculated
-            displayHeightLast = displayHeight;
-            displayWidthLast = displayWidth;
-        }
+    static int Return = 0x10AF8E0D;
+    __asm {
+        popad
+        mov ecx, dword ptr[fov]
+        jmp dword ptr[Return]
+    }
+}
 
-        CodeCaves::lvIn->lPlC()->Sfv() = hSfv;
-        CodeCaves::lvIn->lPlC()->Dfv() = hDfv;
+int WidescreenFovFixEntry = 0x109EC46B;
+__declspec(naked) void WidescreenFovFix() {
+    static float fov;
+    __asm {
+        mov     edx, [ecx + 0x308]
+        mov dword ptr[fov], edx
+        pushad
+    }
+    fov = ScaleFov(fov);
+    static int Return = 0x109EC471;
+    __asm {
+        popad
+        mov edx, dword ptr[fov]
+        jmp dword ptr[Return]
     }
 }
 
 void OnPresented() {
     if (CodeCaves::lvIn != NULL && CodeCaves::lvIn->lPlC() != NULL && pDevice != NULL) {
-        widescreenFovFix();
         CodeCaves::OncePerFrame();
     }
 }
@@ -962,64 +982,6 @@ __declspec(naked) void beforePresent() {
     }
 
 }
-
-// TODO: Remove this approach. Inferior to the others
-//int fixSleepTimerEntry = 0x1095E340;
-//const int fixSleepTimerReturn = 0x1095E38D;
-//__declspec(naked) void fixSleepTimer() {
-//    static int frameRateLimit;
-//    __asm {
-//        pushad
-//    }
-//    if (IsListenServer()) {
-//        frameRateLimit = Config::frameRateLimit_hosting;
-//    }
-//    else {
-//        frameRateLimit = Config::frameRateLimit_client;
-//    }
-//    __asm {
-//        popad
-//        mov     eax, dword ptr[frameRateLimit]
-//        fild    dword ptr[frameRateLimit]
-//        test    eax, eax
-//        jge     loc_1095E356
-//        mov     eax, 0x10C10A24
-//        fadd    dword ptr[eax]
-//        loc_1095E356:
-//        fdivr dword ptr[one]
-//        fld     st(1)
-//        fcomp   st(1)
-//        fnstsw  ax
-//        test    ah, 0x05
-//        jp      loc_1095E389
-//        fsub    st(0), st(1)
-//        fmul    qword ptr[oneThousand]
-//        call    dword ptr[ToMilliseconds]
-//        fstp    st(0)
-//        push    eax
-//
-//        push    0x1
-//        mov     eax, dword ptr[timeBeginPeriodAddr]
-//        call    dword ptr[eax]
-//
-//        mov     eax, dword ptr[sleep]
-//        call    dword ptr[eax]
-//
-//        push    0x1
-//        mov     eax, dword ptr[timeEndPeriodAddr]
-//        call    dword ptr[eax]
-//
-//        mov     edx, [esp + 00]
-//        jmp     fixSleepTimerEnd
-//
-//        loc_1095E389 :
-//        fstp    st(0)
-//        fstp    st(0)
-//
-//        fixSleepTimerEnd :
-//        jmp     dword ptr[fixSleepTimerReturn]
-//    }
-//}
 
 int animatedTextureFixEntry = 0x109F2561;
 __declspec(naked) void animatedTextureFix() {
@@ -1110,14 +1072,15 @@ void Graphics::Initialize()
 
     MemoryWriter::WriteJump(StopDeviceReleaseEntry, StopDeviceRelease);
 
-    if (Config::widescreenAspectRatioFix) {
-        MemoryWriter::WriteJump(SetProjection1Entry, SetProjection1);
-        MemoryWriter::WriteJump(SetProjection2Entry, SetProjection2);
-        MemoryWriter::WriteJump(SetProjection3Entry, SetProjection3);
 
-        MemoryWriter::WriteJump(startRenderMenuEntry, startHudMenuRender);
-        MemoryWriter::WriteJump(endRenderMenuEntry, endHudMenuRender);
-    }
+    MemoryWriter::WriteJump(SetProjection1Entry, SetProjection1);
+    MemoryWriter::WriteJump(SetProjection2Entry, SetProjection2);
+    MemoryWriter::WriteJump(SetProjection3Entry, SetProjection3);
+    MemoryWriter::WriteJump(WidescreenFovFixEntry, WidescreenFovFix);
+    MemoryWriter::WriteJump(WidescreenFirstPersonMeshFovFix2ntry, WidescreenFirstPersonMeshFovFix);
+    MemoryWriter::WriteJump(WidescreenErFovFixEntry, WidescreenErFovFix);
+    MemoryWriter::WriteJump(startRenderMenuEntry, startHudMenuRender);
+    MemoryWriter::WriteJump(endRenderMenuEntry, endHudMenuRender);
 
     MemoryWriter::WriteJump(presentedEntry, presented);
     MemoryWriter::WriteJump(presented2Entry, presented);

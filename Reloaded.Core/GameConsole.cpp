@@ -108,13 +108,34 @@ void GameConsole::WriteGameConsole(std::wstring message) {
 std::map<std::wstring, CommandHandler> getCommandHandlers() {
     std::map<std::wstring, CommandHandler> commandHandlers;
 
+    commandHandlers[L"widescreen"] = {
+            std::format(L"<true/false> - apply widescreen aspect ratio.", Config::baseMouseSensitivity),
+            [](const std::wstring& arg) {
+            if (!arg.empty()) {
+                std::wstring lArg = StringOperations::toLowercase(arg);
+                if (lArg == L"true") {
+                    Config::widescreenAspectRatioFix = true;
+                }
+                else if (lArg == L"false") {
+                    Config::widescreenAspectRatioFix = false;
+                }
+                else {
+                    throw std::runtime_error("Unexpected argument");
+                }
+                Config::Serialize();
+            }
+            GameConsole::WriteGameConsole(std::format(L" > widescreen {}", Config::widescreenAspectRatioFix ? L"true" : L"false"));
+            },
+            std::format(L" widescreen {}", Config::widescreenAspectRatioFix ? L"true" : L"false")
+    };
+
     if (Config::mouseInputFix) {
         commandHandlers[L"sens"] = {
             std::format(L"<number> - mouse sensitivity during gameplay.", Config::baseMouseSensitivity),
             [](const std::wstring& arg) {
             if (!arg.empty()) {
                 Config::baseMouseSensitivity = std::stof(arg);
-            Config::Serialize();
+                Config::Serialize();
             }
             GameConsole::WriteGameConsole(std::format(L" > sens {:.3f}", Config::baseMouseSensitivity));
             },
