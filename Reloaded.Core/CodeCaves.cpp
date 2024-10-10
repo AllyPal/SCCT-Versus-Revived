@@ -108,11 +108,23 @@ void binocularFix() {
     }
 }
 
+static uint32_t sResOriginal;
+static uint32_t sResCountOriginal;
+static uint32_t sResCount2Original;
+
 void onPageUpdate(GUIPageWaitLaunch* page)
 {
     static GUIPageWaitLaunch* lastPage;
-    if (page != lastPage && page->Title() != nullptr && wcscmp(page->Title(), L"Game Options") == 0) {
-        page->Components()->GetControl(3)->Components()->GetControl(2)->flags() &= ~8;
+    if (page != lastPage && page->Title() != nullptr) {
+        if (wcscmp(page->Title(), L"Game Options") == 0) {
+            page->Components()->GetControl(3)->Components()->GetControl(2)->flags() &= ~8;
+        }
+        else if (wcscmp(page->Title(), L"Video Options") == 0) {
+            // Restore original pointer when we're done so it's freed
+            page->sResArray().sRes() = sResOriginal;
+            page->sResArray().sResCount() = sResCountOriginal;
+            page->sResArray().sResCount2() = sResCount2Original;
+        }
     }
     lastPage = page;
 }
@@ -167,6 +179,10 @@ void onPageLoad(GUIPageWaitLaunch* page)
 {
     static GUIPageWaitLaunch* lastPage;
     if (page != lastPage && page->Title() != nullptr && wcscmp(page->Title(), L"Video Options") == 0) {
+        sResOriginal = page->sResArray().sRes();
+        sResCountOriginal = page->sResArray().sResCount();
+        sResCount2Original = page->sResArray().sResCount2();
+
         page->sResArray().sRes() = reinterpret_cast<uintptr_t>(Graphics::videoSettingsDisplayModes);
         page->sResArray().sResCount() = Graphics::GetResolutionCount();
         page->sResArray().sResCount2() = Graphics::GetResolutionCount();
